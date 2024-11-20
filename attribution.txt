@@ -1,0 +1,12 @@
+MUSIC AND SOUND EFFECTS
+***********************
+Splash screen:
+  Space Game Theme Loop.wav by Mrthenoronha -- https://freesound.org/s/371516/ -- License: Attribution NonCommercial 4.0
+
+Level loading screen:
+  Dystopian Future - FX Sounds (8).wav by BurghRecords -- https://freesound.org/s/390539/ -- License: Creative Commons 0
+
+Level screen:
+  Sci-Fi Music Loop 01 by Magmi.Soundtracks -- https://freesound.org/s/476556/ -- License: Creative Commons 0
+  Jetpack Low by knova -- https://freesound.org/s/170278/ -- License: Attribution 4.0
+  Car Crash by squareal -- https://freesound.org/s/237375/ -- License: Creative Commons 0
