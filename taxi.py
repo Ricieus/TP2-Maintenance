@@ -146,7 +146,7 @@ class Taxi(pygame.sprite.Sprite):
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """ Gère les événements du taxi. """
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN: # redondant ? (il se trouve deja ce if dans la méthode handle_event de la classe level_scene) -Marc
             if event.key == pygame.K_SPACE:
                 if self._pad_landed_on is None:
                     if self._flags & Taxi._FLAG_GEAR_OUT != Taxi._FLAG_GEAR_OUT:
@@ -282,6 +282,9 @@ class Taxi(pygame.sprite.Sprite):
             return
 
         keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_RIGHT] and keys[pygame.K_LEFT] or keys[pygame.K_UP] and keys[pygame.K_DOWN]:
+            return
 
         gear_out = self._flags & Taxi._FLAG_GEAR_OUT == Taxi._FLAG_GEAR_OUT
 

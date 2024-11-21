@@ -62,7 +62,7 @@ def main() -> None:
 
             scene_manager.update(delta_time)
 
-            scene_manager.render(screen)
+            scene_manager.render(screen) # on peut (peut etre) mettre render dans le update ?
 
             if show_fps:
                 fps = clock.get_fps()
