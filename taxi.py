@@ -95,6 +95,7 @@ class Taxi(pygame.sprite.Sprite):
                 self._flags = self._FLAG_DESTROYED
                 self._crash_sound.play()
                 self._velocity_x = 0.0
+                self._velocity_y = 0.0
                 self._acceleration_x = 0.0
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
 
@@ -116,6 +117,7 @@ class Taxi(pygame.sprite.Sprite):
                 self._flags = self._FLAG_DESTROYED
                 self._crash_sound.play()
                 self._velocity_x = 0.0
+                self._velocity_y = 0.0
                 self._acceleration_x = 0.0
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
                 return True
@@ -136,6 +138,7 @@ class Taxi(pygame.sprite.Sprite):
                 self._flags = self._FLAG_DESTROYED
                 self._crash_sound.play()
                 self._velocity_x = 0.0
+                self._velocity_y = 0.0
                 self._acceleration_x = 0.0
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
                 return True
@@ -148,7 +151,7 @@ class Taxi(pygame.sprite.Sprite):
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """ Gère les événements du taxi. """
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN: # redondant ? (il se trouve deja ce if dans la méthode handle_event de la classe level_scene) -Marc
             if event.key == pygame.K_SPACE:
                 if self._pad_landed_on is None:
                     if self._flags & Taxi._FLAG_GEAR_OUT != Taxi._FLAG_GEAR_OUT:
@@ -247,7 +250,7 @@ class Taxi(pygame.sprite.Sprite):
     def unboard_astronaut(self) -> None:
         """ Fait descendre l'astronaute qui se trouve à bord. """
         if self._astronaut.target_pad is not Pad.UP:
-            self._astronaut.move(self.rect.x, self._pad_landed_on.rect.y - self._astronaut.rect.height)
+            self._astronaut.move(self.rect.x + 20, self._pad_landed_on.rect.y - self._astronaut.rect.height)
             self._astronaut.jump(self._pad_landed_on.astronaut_end.x)
 
         self._hud.add_bank_money(self._astronaut.get_trip_money())
@@ -294,6 +297,9 @@ class Taxi(pygame.sprite.Sprite):
             return
 
         keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_RIGHT] and keys[pygame.K_LEFT] or keys[pygame.K_UP] and keys[pygame.K_DOWN]:
+            return
 
         gear_out = self._flags & Taxi._FLAG_GEAR_OUT == Taxi._FLAG_GEAR_OUT
 
