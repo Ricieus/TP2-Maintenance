@@ -86,6 +86,7 @@ class Taxi(pygame.sprite.Sprite):
         :param obstacle: obstacle avec lequel vérifier
         :return: True si le taxi est en contact avec l'obstacle, False sinon
         """
+
         if self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED:
             return False
 
@@ -96,6 +97,7 @@ class Taxi(pygame.sprite.Sprite):
                 self._velocity_x = 0.0
                 self._acceleration_x = 0.0
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
+
                 return True
 
         return False
@@ -184,6 +186,7 @@ class Taxi(pygame.sprite.Sprite):
         Vérifie si le taxi est détruit.
         :return: True si le taxi est détruit, False sinon
         """
+
         return self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED
 
     def land_on_pad(self, pad: Pad) -> bool:
@@ -200,6 +203,15 @@ class Taxi(pygame.sprite.Sprite):
             return False
 
         if not self.rect.colliderect(pad.rect):
+            return False
+
+        taxi_edges_position = (self.rect.left, self.rect.right) #tuple qui prend le position gauche et droite de taxi
+        platform_edges_position = (pad.rect.left, pad.rect.right) #tuple qui prend le position gauche et droite de plateforme
+
+        #Condition vérifie si le bord gauche de taxi dépasse le position gauche du plateforme ou si le bord droite du taxi dépasse le position du plateforme a droite
+        if taxi_edges_position[0] < platform_edges_position[0] or taxi_edges_position[1] > platform_edges_position[1]:
+            self._flags = self._FLAG_DESTROYED
+            self._crash_sound.play()
             return False
 
         if pygame.sprite.collide_mask(self, pad):
