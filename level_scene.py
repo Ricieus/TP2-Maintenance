@@ -26,7 +26,6 @@ class LevelScene(Scene):
         :param level: le numéro de niveau
         """
         super().__init__()
-        print("Construit level_scene ", level)
         self._level = level
         self._surface = pygame.image.load("img/space01.png").convert_alpha()
         self._music = pygame.mixer.Sound("snd/476556__magmisoundtracks__sci-fi-music-loop-01.wav")

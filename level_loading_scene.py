@@ -18,7 +18,6 @@ class LevelLoadingScene(Scene):
         self._music_started = False
         self._fade_out_start_time = None
         self._scene_in_use = False
-        print("Construit level_loading_scene ", level)
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
@@ -28,7 +27,7 @@ class LevelLoadingScene(Scene):
                 SceneManager().change_scene(f"level{self._level}", LevelLoadingScene._FADE_OUT_DURATION)
 
     def update(self, delta_time: float) -> None:
-        if not self._scene_in_use:
+        if not self._scene_in_use: # Pour exécuter une seule fois.
             SceneManager().add_scene(f"level{self._level}", LevelScene(self._level))
             self._scene_in_use = True
 
