@@ -43,10 +43,12 @@ def main() -> None:
         fps_font = pygame.font.Font(None, 36)
 
     scene_manager = SceneManager()
+    print("Début de construction")
     scene_manager.add_scene("splash", SplashScene())
     scene_manager.add_scene("level1_load", LevelLoadingScene(1))
-    scene_manager.add_scene("level1", LevelScene(1))
+    #scene_manager.add_scene("level1", LevelScene(1))
     scene_manager.add_scene("level2_load", LevelLoadingScene(2))
+    print("Fin de construction")
 
     scene_manager.set_scene("splash")
 
@@ -55,14 +57,14 @@ def main() -> None:
 
             delta_time = clock.tick(settings.FPS) / 1000  # en secondes
 
+            scene_manager.update(delta_time)
+
+            scene_manager.render(screen)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     quit_game()
                 scene_manager.handle_event(event)
-
-            scene_manager.update(delta_time)
-
-            scene_manager.render(screen) # on peut (peut etre) mettre render dans le update ?
 
             if show_fps:
                 fps = clock.get_fps()

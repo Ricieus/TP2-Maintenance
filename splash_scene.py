@@ -15,6 +15,7 @@ class SplashScene(Scene):
         self._music = pygame.mixer.Sound("snd/371516__mrthenoronha__space-game-theme-loop.wav")
         self._music.play(loops=-1, fade_ms=1000)
         self._fade_out_start_time = None
+        print("Construit splash_screen")
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
