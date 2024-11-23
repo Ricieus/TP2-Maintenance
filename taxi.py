@@ -94,6 +94,7 @@ class Taxi(pygame.sprite.Sprite):
                 self._flags = self._FLAG_DESTROYED
                 self._crash_sound.play()
                 self._velocity_x = 0.0
+                self._velocity_y = 0.0
                 self._acceleration_x = 0.0
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
                 return True
@@ -114,6 +115,7 @@ class Taxi(pygame.sprite.Sprite):
                 self._flags = self._FLAG_DESTROYED
                 self._crash_sound.play()
                 self._velocity_x = 0.0
+                self._velocity_y = 0.0
                 self._acceleration_x = 0.0
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
                 return True
@@ -134,6 +136,7 @@ class Taxi(pygame.sprite.Sprite):
                 self._flags = self._FLAG_DESTROYED
                 self._crash_sound.play()
                 self._velocity_x = 0.0
+                self._velocity_y = 0.0
                 self._acceleration_x = 0.0
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
                 return True
