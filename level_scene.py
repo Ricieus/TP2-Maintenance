@@ -132,6 +132,7 @@ class LevelScene(Scene):
             if self._taxi.land_on_pad(pad):
                 pass  # introduire les effets secondaires d'un atterrissage ici
             elif self._taxi.crash_on_obstacle(pad):
+                self.reset_money_after_crash()
                 self._hud.loose_live()
 
         for obstacle in self._obstacles:
@@ -145,6 +146,7 @@ class LevelScene(Scene):
 
         for pump in self._pumps:
             if self._taxi.crash_on_obstacle(pump):
+                self.reset_money_after_crash()
                 self._hud.loose_live()
             elif self._taxi.refuel_from(pump):
                 pass  # introduire les effets secondaires de remplissage de réservoir ici
