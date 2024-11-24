@@ -2,7 +2,8 @@ from enum import Enum, auto
 
 import pygame
 
-from astronaut import Astronaut
+import hud
+from astronaut import Astronaut, AstronautState
 from hud import HUD
 from obstacle import Obstacle
 from pad import Pad
@@ -80,7 +81,7 @@ class Taxi(pygame.sprite.Sprite):
     def board_astronaut(self, astronaut: Astronaut) -> None:
         self._astronaut = astronaut
 
-    def crash_on_obstacle(self, obstacle: Obstacle) -> bool:
+    def crash_on_obstacle(self, obstacle: pygame.sprite.Sprite):
         """
         Vérifie si le taxi est en situation de crash contre un obstacle.
         :param obstacle: obstacle avec lequel vérifier
@@ -99,48 +100,6 @@ class Taxi(pygame.sprite.Sprite):
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
 
                 return True
-
-        return False
-
-    def crash_on_pad(self, pad: Pad) -> bool:
-        """
-        Vérifie si le taxi est en situation de crash contre une plateforme.
-        :param pad: plateforme avec laquelle vérifier
-        :return: True si le taxi est en contact avec la plateforme, False sinon
-        """
-        if self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED:
-            return False
-
-        if self.rect.colliderect(pad.rect):
-            if pygame.sprite.collide_mask(self, pad):
-                self._flags = self._FLAG_DESTROYED
-                self._crash_sound.play()
-                self._velocity_x = 0.0
-                self._acceleration_x = 0.0
-                self._acceleration_y = Taxi._CRASH_ACCELERATION
-                return True
-
-        return False
-
-    def crash_on_pump(self, pump: Pump) -> bool:
-        """
-        Vérifie si le taxi est en situation de crash contre une pompe.
-        :param pump: pompe avec laquelle vérifier
-        :return: True si le taxi est en contact avec la pompe, False sinon
-        """
-        if self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED:
-            return False
-
-        if self.rect.colliderect(pump.rect):
-            if pygame.sprite.collide_mask(self, pump):
-                self._flags = self._FLAG_DESTROYED
-                self._crash_sound.play()
-                self._velocity_x = 0.0
-                self._acceleration_x = 0.0
-                self._acceleration_y = Taxi._CRASH_ACCELERATION
-                return True
-
-        return False
 
     def draw(self, surface: pygame.Surface) -> None:
         """ Dessine le taxi sur la surface fournie comme argument. """
@@ -177,7 +136,10 @@ class Taxi(pygame.sprite.Sprite):
 
         if self.rect.colliderect(astronaut.rect):
             if pygame.sprite.collide_mask(self, astronaut):
-                return True
+                astronaut._state = AstronautState.REACHED_DESTINATION
+                self._hud._bank_money = self._hud._bank_money / 2
+                self._hud._bank_money_surface = self._hud._render_bank_money_surface()
+                # return True
 
         return False
 
