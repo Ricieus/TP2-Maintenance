@@ -34,6 +34,9 @@ def main() -> None:
     settings = GameSettings()
     screen = pygame.display.set_mode((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
     pygame.display.set_caption("Tribute to Space Taxi!")
+    window_icon = pygame.image.load('img/logo.png')
+    pygame.display.set_icon(window_icon)
+
 
     clock = pygame.time.Clock()
 
