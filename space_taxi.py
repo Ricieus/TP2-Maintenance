@@ -51,10 +51,7 @@ def main() -> None:
 
     try:
         while True:
-
-            delta_time = clock.tick(settings.FPS) / 1000  # en secondes
-
-            scene_manager.update(delta_time)
+            scene_manager.update(settings.FPS)
 
             scene_manager.render(screen)
 
