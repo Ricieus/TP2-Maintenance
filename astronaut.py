@@ -3,6 +3,8 @@ import random
 import time
 
 from enum import Enum, auto
+
+from fatal_error import FatalError
 from pad import Pad
 
 
@@ -284,21 +286,36 @@ class Astronaut(pygame.sprite.Sprite):
         """
         Charge les clips sonores (voix).
         :return: un tuple contenant dans l'ordre:
-                     - une liste de clips (pygame.mixer.Sound) "Hey, taxi"
-                     - une liste de clips (pygame.mixer.Sound) "Pad # please" ou "Up please"
-                     - une liste de clips (pygame.mixer.Sound) "Hey!"
+                 - une liste de clips (pygame.mixer.Sound) "Hey, taxi"
+                 - une liste de clips (pygame.mixer.Sound) "Pad # please" ou "Up please"
+                 - une liste de clips (pygame.mixer.Sound) "Hey!"
         """
-        hey_taxis = [pygame.mixer.Sound("voices/gary_hey_taxi_01.mp3"),
-                     pygame.mixer.Sound("voices/gary_hey_taxi_02.mp3"),
-                     pygame.mixer.Sound("voices/gary_hey_taxi_03.mp3")]
+        try:
+            hey_taxis = [
+                pygame.mixer.Sound("voices/gary_hey_taxi_01.mp3"),
+                pygame.mixer.Sound("voices/gary_hey_taxi_02.mp3"),
+                pygame.mixer.Sound("voices/gary_hey_taxi_03.mp3"),
+            ]
 
-        pad_pleases = [pygame.mixer.Sound("voices/gary_up_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_1_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_2_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_3_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_4_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_5_please_01.mp3")]
+            pad_pleases = [
+                pygame.mixer.Sound("voices/gary_up_please_01.mp3"),
+                pygame.mixer.Sound("voices/gary_pad_1_please_01.mp3"),
+                pygame.mixer.Sound("voices/gary_pad_2_please_01.mp3"),
+                pygame.mixer.Sound("voices/gary_pad_3_please_01.mp3"),
+                pygame.mixer.Sound("voices/gary_pad_4_please_01.mp3"),
+                pygame.mixer.Sound("voices/gary_pad_5_please_01.mp3"),
+            ]
 
-        heys = [pygame.mixer.Sound("voices/gary_hey_01.mp3")]
+            heys = [pygame.mixer.Sound("voices/gary_hey_01.mp3")]
 
-        return hey_taxis, pad_pleases, heys
+            return hey_taxis, pad_pleases, heys
+
+        except FileNotFoundError as e:
+            directory_plus_filename = str(e).split("'")[1]
+            filename = directory_plus_filename.split("/")[-1]
+            fatal_error_app = FatalError()
+            fatal_error_app.run(filename)
+
+            return [], [], []
+
+

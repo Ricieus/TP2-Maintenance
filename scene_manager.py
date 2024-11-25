@@ -35,10 +35,26 @@ class SceneManager:
         if self._transitioning:
             return
 
+        # Si la scène actuelle existe et n'est plus nécessaire, on peut la libérer
+        if self._current_scene:
+            self.remove_scene(self._current_scene)
+
+        # Transition vers la nouvelle scène
         self._next_scene = self._scenes.get(name, self._current_scene)
         self._fade = Fade(self._current_scene, self._next_scene)
         self._fade.start(fade_duration)
         self._transitioning = True
+
+    def remove_scene(self, scene: Scene) -> None:
+        """ Retire une scène de la mémoire si elle n'est plus utilisée. """
+        scene_name = None
+        for name, current_scene in self._scenes.items():
+            if current_scene == scene:
+                scene_name = name
+                break
+        if scene_name:
+            del self._scenes[scene_name]
+            print(f"Scène {scene_name} supprimée de la mémoire.")
 
     def update(self, delta_time: float) -> None:
         if self._current_scene:
