@@ -2,7 +2,7 @@ import pygame
 
 from scene import Scene
 from scene_manager import SceneManager
-from game_settings import GameSettings
+from game_settings import GameSettings, Files
 
 
 class SplashScene(Scene):
@@ -12,8 +12,8 @@ class SplashScene(Scene):
 
     def __init__(self) -> None:
         super().__init__()
-        self._surface = pygame.image.load(GameSettings.FILE_NAMES["img_splash"]).convert_alpha()
-        self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES["snd_splash"])
+        self._surface = pygame.image.load(GameSettings.FILE_NAMES[Files.IMG_SPLASH]).convert_alpha()
+        self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_SPLASH])
         self._music.play(loops=-1, fade_ms=1000)
         self._fade_out_start_time = None
 

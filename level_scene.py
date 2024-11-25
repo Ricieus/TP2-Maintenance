@@ -2,7 +2,7 @@ import pygame
 import time
 
 from astronaut import Astronaut
-from game_settings import GameSettings
+from game_settings import GameSettings, Files
 from gate import Gate
 from hud import HUD
 from obstacle import Obstacle
@@ -27,8 +27,8 @@ class LevelScene(Scene):
         """
         super().__init__()
         self._level = level
-        self._surface = pygame.image.load(GameSettings.FILE_NAMES["img_level"]).convert_alpha()
-        self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES["snd_music_level"])
+        self._surface = pygame.image.load(GameSettings.FILE_NAMES[Files.IMG_LEVEL]).convert_alpha()
+        self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_MUSIC_LEVEL])
         self._music_started = False
         self._fade_out_start_time = None
 
@@ -37,26 +37,26 @@ class LevelScene(Scene):
 
         self._taxi = Taxi((self._settings.SCREEN_WIDTH / 2, self._settings.SCREEN_HEIGHT / 2))
 
-        self._gate = Gate(GameSettings.FILE_NAMES["img_gate"], (582, 3))
+        self._gate = Gate(GameSettings.FILE_NAMES[Files.IMG_GATE], (582, 3))
 
-        self._obstacles = [Obstacle(GameSettings.FILE_NAMES["img_obstacles"][0], (0, self._settings.SCREEN_HEIGHT - 141)),
-                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][1], (0, 0)),
-                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][2], (self._settings.SCREEN_WIDTH - 99, 0)),
-                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][3], (0, 0)),
-                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][4], (840, 150)),
-                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][5], (250, 200))]
+        self._obstacles = [Obstacle(GameSettings.FILE_NAMES[Files.IMG_OBSTACLES][0], (0, self._settings.SCREEN_HEIGHT - 141)),
+                           Obstacle(GameSettings.FILE_NAMES[Files.IMG_OBSTACLES][1], (0, 0)),
+                           Obstacle(GameSettings.FILE_NAMES[Files.IMG_OBSTACLES][2], (self._settings.SCREEN_WIDTH - 99, 0)),
+                           Obstacle(GameSettings.FILE_NAMES[Files.IMG_OBSTACLES][3], (0, 0)),
+                           Obstacle(GameSettings.FILE_NAMES[Files.IMG_OBSTACLES][4], (840, 150)),
+                           Obstacle(GameSettings.FILE_NAMES[Files.IMG_OBSTACLES][5], (250, 200))]
         self._obstacle_sprites = pygame.sprite.Group()
         self._obstacle_sprites.add(self._obstacles)
 
-        self._pumps = [Pump(GameSettings.FILE_NAMES["img_pump"], (305, 335))]
+        self._pumps = [Pump(GameSettings.FILE_NAMES[Files.IMG_PUMP], (305, 335))]
         self._pump_sprites = pygame.sprite.Group()
         self._pump_sprites.add(self._pumps)
 
-        self._pads = [Pad(1, GameSettings.FILE_NAMES["img_pads"][0], (650, self._settings.SCREEN_HEIGHT - 68), 5, 5),
-                      Pad(2, GameSettings.FILE_NAMES["img_pads"][1], (510, 205), 90, 15),
-                      Pad(3, GameSettings.FILE_NAMES["img_pads"][2], (150, 360), 10, 10),
-                      Pad(4, GameSettings.FILE_NAMES["img_pads"][3], (670, 480), 30, 280),
-                      Pad(5, GameSettings.FILE_NAMES["img_pads"][4], (1040, 380), 30, 120)]
+        self._pads = [Pad(1, GameSettings.FILE_NAMES[Files.IMG_PADS][0], (650, self._settings.SCREEN_HEIGHT - 68), 5, 5),
+                      Pad(2, GameSettings.FILE_NAMES[Files.IMG_PADS][1], (510, 205), 90, 15),
+                      Pad(3, GameSettings.FILE_NAMES[Files.IMG_PADS][2], (150, 360), 10, 10),
+                      Pad(4, GameSettings.FILE_NAMES[Files.IMG_PADS][3], (670, 480), 30, 280),
+                      Pad(5, GameSettings.FILE_NAMES[Files.IMG_PADS][4], (1040, 380), 30, 120)]
         self._pad_sprites = pygame.sprite.Group()
         self._pad_sprites.add(self._pads)
 
