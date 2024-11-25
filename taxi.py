@@ -3,6 +3,7 @@ from enum import Enum, auto
 import pygame
 
 from astronaut import Astronaut
+from game_settings import GameSettings
 from hud import HUD
 from obstacle import Obstacle
 from pad import Pad
@@ -26,7 +27,7 @@ class ImgSelector(Enum):
 class Taxi(pygame.sprite.Sprite):
     """ Un taxi spatial. """
 
-    _TAXIS_FILENAME = "img/taxis.png"
+    _TAXIS_FILENAME = GameSettings.FILE_NAMES["img_taxis"]
     _NB_TAXI_IMAGES = 6
 
     _FLAG_LEFT = 1 << 0  # indique si le taxi va vers la gauche
@@ -63,11 +64,11 @@ class Taxi(pygame.sprite.Sprite):
 
         self._hud = HUD()
 
-        self._reactor_sound = pygame.mixer.Sound("snd/170278__knova__jetpack-low.wav")
+        self._reactor_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES["snd_reactor"])
         self._reactor_sound.set_volume(0)
         self._reactor_sound.play(-1)
 
-        self._crash_sound = pygame.mixer.Sound("snd/237375__squareal__car-crash.wav")
+        self._crash_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES["snd_crash"])
 
         self._surfaces, self._masks = Taxi._load_and_build_surfaces()
 

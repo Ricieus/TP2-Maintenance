@@ -3,6 +3,8 @@ import random
 import time
 
 from enum import Enum, auto
+
+from game_settings import GameSettings
 from pad import Pad
 
 
@@ -19,7 +21,7 @@ class AstronautState(Enum):
 class Astronaut(pygame.sprite.Sprite):
     """ Un astronaute. """
 
-    _ASTRONAUT_FILENAME = "img/astronaut.png"
+    _ASTRONAUT_FILENAME = GameSettings.FILE_NAMES["img_astronaut"]
     _NB_WAITING_IMAGES = 1
     _NB_WAVING_IMAGES = 4
     _NB_JUMPING_IMAGES = 6
@@ -288,17 +290,17 @@ class Astronaut(pygame.sprite.Sprite):
                      - une liste de clips (pygame.mixer.Sound) "Pad # please" ou "Up please"
                      - une liste de clips (pygame.mixer.Sound) "Hey!"
         """
-        hey_taxis = [pygame.mixer.Sound("voices/gary_hey_taxi_01.mp3"),
-                     pygame.mixer.Sound("voices/gary_hey_taxi_02.mp3"),
-                     pygame.mixer.Sound("voices/gary_hey_taxi_03.mp3")]
+        hey_taxis = [pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_hey_taxi"][0]),
+                     pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_hey_taxi"][1]),
+                     pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_hey_taxi"][2])]
 
-        pad_pleases = [pygame.mixer.Sound("voices/gary_up_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_1_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_2_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_3_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_4_please_01.mp3"),
-                       pygame.mixer.Sound("voices/gary_pad_5_please_01.mp3")]
+        pad_pleases = [pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_pad"][0]),
+                       pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_pad"][1]),
+                       pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_pad"][2]),
+                       pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_pad"][3]),
+                       pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_pad"][4]),
+                       pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_pad"][5])]
 
-        heys = [pygame.mixer.Sound("voices/gary_hey_01.mp3")]
+        heys = [pygame.mixer.Sound(GameSettings.FILE_NAMES["voices_astronaut_hey"])]
 
         return hey_taxis, pad_pleases, heys

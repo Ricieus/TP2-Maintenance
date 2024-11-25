@@ -21,7 +21,6 @@ import sys
 
 from game_settings import GameSettings
 from level_loading_scene import LevelLoadingScene
-from level_scene import LevelScene
 from scene_manager import SceneManager
 from splash_scene import SplashScene
 
@@ -51,7 +50,9 @@ def main() -> None:
 
     try:
         while True:
-            scene_manager.update(settings.FPS)
+            delta_time = clock.tick(settings.FPS) / 1000
+
+            scene_manager.update(delta_time)
 
             scene_manager.render(screen)
 

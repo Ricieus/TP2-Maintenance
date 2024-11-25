@@ -3,6 +3,7 @@ import pygame
 from level_scene import LevelScene
 from scene import Scene
 from scene_manager import SceneManager
+from game_settings import GameSettings
 
 
 class LevelLoadingScene(Scene):
@@ -13,8 +14,8 @@ class LevelLoadingScene(Scene):
     def __init__(self, level: int) -> None:
         super().__init__()
         self._level = level
-        self._surface = pygame.image.load("img/loading.png").convert_alpha()
-        self._music = pygame.mixer.Sound("snd/390539__burghrecords__dystopian-future-fx-sounds-8.wav")
+        self._surface = pygame.image.load(GameSettings.FILE_NAMES["img_loading"]).convert_alpha()
+        self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES["snd_music_loading"])
         self._music_started = False
         self._fade_out_start_time = None
         self._scene_in_use = False

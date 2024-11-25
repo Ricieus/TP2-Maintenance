@@ -27,8 +27,8 @@ class LevelScene(Scene):
         """
         super().__init__()
         self._level = level
-        self._surface = pygame.image.load("img/space01.png").convert_alpha()
-        self._music = pygame.mixer.Sound("snd/476556__magmisoundtracks__sci-fi-music-loop-01.wav")
+        self._surface = pygame.image.load(GameSettings.FILE_NAMES["img_level"]).convert_alpha()
+        self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES["snd_music_level"])
         self._music_started = False
         self._fade_out_start_time = None
 
@@ -37,26 +37,26 @@ class LevelScene(Scene):
 
         self._taxi = Taxi((self._settings.SCREEN_WIDTH / 2, self._settings.SCREEN_HEIGHT / 2))
 
-        self._gate = Gate("img/gate.png", (582, 3))
+        self._gate = Gate(GameSettings.FILE_NAMES["img_gate"], (582, 3))
 
-        self._obstacles = [Obstacle("img/south01.png", (0, self._settings.SCREEN_HEIGHT - 141)),
-                           Obstacle("img/west01.png", (0, 0)),
-                           Obstacle("img/east01.png", (self._settings.SCREEN_WIDTH - 99, 0)),
-                           Obstacle("img/north01.png", (0, 0)),
-                           Obstacle("img/obstacle01.png", (840, 150)),
-                           Obstacle("img/obstacle02.png", (250, 200))]
+        self._obstacles = [Obstacle(GameSettings.FILE_NAMES["img_obstacles"][0], (0, self._settings.SCREEN_HEIGHT - 141)),
+                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][1], (0, 0)),
+                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][2], (self._settings.SCREEN_WIDTH - 99, 0)),
+                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][3], (0, 0)),
+                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][4], (840, 150)),
+                           Obstacle(GameSettings.FILE_NAMES["img_obstacles"][5], (250, 200))]
         self._obstacle_sprites = pygame.sprite.Group()
         self._obstacle_sprites.add(self._obstacles)
 
-        self._pumps = [Pump("img/pump.png", (305, 335))]
+        self._pumps = [Pump(GameSettings.FILE_NAMES["img_pump"], (305, 335))]
         self._pump_sprites = pygame.sprite.Group()
         self._pump_sprites.add(self._pumps)
 
-        self._pads = [Pad(1, "img/pad01.png", (650, self._settings.SCREEN_HEIGHT - 68), 5, 5),
-                      Pad(2, "img/pad02.png", (510, 205), 90, 15),
-                      Pad(3, "img/pad03.png", (150, 360), 10, 10),
-                      Pad(4, "img/pad04.png", (670, 480), 30, 280),
-                      Pad(5, "img/pad05.png", (1040, 380), 30, 120)]
+        self._pads = [Pad(1, GameSettings.FILE_NAMES["img_pads"][0], (650, self._settings.SCREEN_HEIGHT - 68), 5, 5),
+                      Pad(2, GameSettings.FILE_NAMES["img_pads"][1], (510, 205), 90, 15),
+                      Pad(3, GameSettings.FILE_NAMES["img_pads"][2], (150, 360), 10, 10),
+                      Pad(4, GameSettings.FILE_NAMES["img_pads"][3], (670, 480), 30, 280),
+                      Pad(5, GameSettings.FILE_NAMES["img_pads"][4], (1040, 380), 30, 120)]
         self._pad_sprites = pygame.sprite.Group()
         self._pad_sprites.add(self._pads)
 

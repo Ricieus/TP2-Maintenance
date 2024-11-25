@@ -6,7 +6,7 @@ from game_settings import GameSettings
 class HUD:
     """ Singleton pour l'affichage tête haute (HUD). """
 
-    _LIVES_ICONS_FILENAME = "img/hud_lives.png"
+    _LIVES_ICONS_FILENAME = GameSettings.FILE_NAMES["img_icon_lives"]
     _LIVES_ICONS_SPACING = 10
 
     _instance = None
