@@ -89,6 +89,6 @@ class GameSettings:
     def __init__(self) -> None:
         if not hasattr(self, '_initialized'):
             self.screen = None
-            self.pad_font = pygame.font.Font(GameSettings.FILE_NAMES["font_boombox2"], 11)
+            self.pad_font = pygame.font.Font(GameSettings.FILE_NAMES[Files.FONT], 11)
 
             self._initialized = True
