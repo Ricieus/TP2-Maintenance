@@ -27,6 +27,7 @@ class HUD:
             self._bank_money_pos = pygame.Vector2(20, self._settings.SCREEN_HEIGHT - (self._bank_money_surface.get_height() + 10))
 
             self._trip_money = 0
+            self._last_saved_money = 0
             self._trip_money_surface = self._render_trip_money_surface()
 
             self._lives = self._settings.NB_PLAYER_LIVES
@@ -50,6 +51,7 @@ class HUD:
 
     def add_bank_money(self, amount: float) -> None:
         self._bank_money += round(amount, 2)
+        self._last_saved_money = amount
         self._bank_money_surface = self._render_bank_money_surface()
 
     def get_lives(self) -> int:

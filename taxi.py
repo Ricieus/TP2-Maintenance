@@ -137,11 +137,14 @@ class Taxi(pygame.sprite.Sprite):
 
         if self.rect.colliderect(astronaut.rect):
             if pygame.sprite.collide_mask(self, astronaut):
-                astronaut._state = AstronautState.REACHED_DESTINATION
-                self._hud._bank_money = self._hud._bank_money / 2
-                self._hud._bank_money_surface = self._hud._render_bank_money_surface()
-                # return True
-
+                if astronaut._velocity != 0:
+                    astronaut._state = AstronautState.REACHED_DESTINATION
+                    hitting_fines = self._hud._last_saved_money / 2
+                    self._hud._bank_money -= hitting_fines
+                    self._hud._bank_money_surface = self._hud._render_bank_money_surface()
+                    self._hud._last_saved_money = 0.0
+                    return False
+                return True
         return False
 
     def is_destroyed(self) -> bool:
