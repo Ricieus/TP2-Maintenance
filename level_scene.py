@@ -1,7 +1,6 @@
-import sys
-
 import pygame
 import time
+import configparser
 
 from astronaut import Astronaut
 from fatal_error import FatalError
@@ -20,7 +19,6 @@ class LevelScene(Scene):
     """ Un niveau de jeu. """
 
     _FADE_OUT_DURATION: int = 500  # ms
-
     _TIME_BETWEEN_ASTRONAUTS: int = 5  # s
 
     def __init__(self, level: int) -> None:
@@ -45,34 +43,50 @@ class LevelScene(Scene):
         self._last_taxied_astronaut_time = time.time()
 
         try:
-            self._surface = pygame.image.load("img/space01.png").convert_alpha()
-            self._music = pygame.mixer.Sound("snd/476556__magmisoundtracks__sci-fi-music-loop-01.wav")
+            config = configparser.ConfigParser()
+            config.read(f"levels/level{1}.cfg")
+
+            self._surface = pygame.image.load(config.get("level", "surface")).convert_alpha()
+            self._music = pygame.mixer.Sound(config.get("level", "music"))
 
             self._settings = GameSettings()
             self._hud = HUD()
 
             self._taxi = Taxi((self._settings.SCREEN_WIDTH / 2, self._settings.SCREEN_HEIGHT / 2))
 
-            self._gate = Gate("img/gate.png", (582, 3))
+            gate_path = config.get("gate", "gate")  # Exemple : "img/gate.png,582,3"
 
-            self._obstacles = [Obstacle("img/south01.png", (0, self._settings.SCREEN_HEIGHT - 141)),
-                               Obstacle("img/west01.png", (0, 0)),
-                               Obstacle("img/east01.png", (self._settings.SCREEN_WIDTH - 99, 0)),
-                               Obstacle("img/north01.png", (0, 0)),
-                               Obstacle("img/obstacle01.png", (840, 150)),
-                               Obstacle("img/obstacle02.png", (250, 200))]
+            # Séparer le chemin de l'image et les coordonnées
+            gate_data = gate_path.split(",")  # Divise en ['img/gate.png', '582', '3']
+
+            # Chargement de l'image
+            self._gate = pygame.image.load(gate_data[0].strip()).convert_alpha()
+
+            # Extraction des coordonnées (x, y)
+            x, y = map(int, gate_data[1:])  # Convertit les valeurs en entiers
+            self._gate_position = (x, y)
+
+            # Créer une instance de Gate avec l'image et la position
+            self._gate = Gate(gate_data[0].strip(), (x, y))
+
+            self._obstacles = []
+            for key in config["obstacles"]:
+                img_path, x, y = config.get("obstacles", key).split(", ")
+                self._obstacles.append(Obstacle(img_path, (int(x), int(y))))
             self._obstacle_sprites = pygame.sprite.Group()
             self._obstacle_sprites.add(self._obstacles)
 
-            self._pumps = [Pump("img/pump.png", (305, 335))]
+            self._pumps = []
+            for key in config["pumps"]:
+                img_path, x, y = config.get("pumps", key).split(", ")
+                self._pumps.append(Pump(img_path, (int(x), int(y))))
             self._pump_sprites = pygame.sprite.Group()
             self._pump_sprites.add(self._pumps)
 
-            self._pads = [Pad(1, "img/pad01.png", (650, self._settings.SCREEN_HEIGHT - 68), 5, 5),
-                          Pad(2, "img/pad02.png", (510, 205), 90, 15),
-                          Pad(3, "img/pad03.png", (150, 360), 10, 10),
-                          Pad(4, "img/pad04.png", (670, 480), 30, 280),
-                          Pad(5, "img/pad05.png", (1040, 380), 30, 120)]
+            self._pads = []
+            for key in config["pads"]:
+                img_path, x, y, width, height = config.get("pads", key).split(", ")
+                self._pads.append(Pad(int(key[3:]), img_path, (int(x), int(y)), int(width), int(height)))
             self._pad_sprites = pygame.sprite.Group()
             self._pad_sprites.add(self._pads)
 
@@ -84,7 +98,6 @@ class LevelScene(Scene):
             filename = directory_plus_filename.split("/")[-1]
             fatal_error_app = FatalError()
             fatal_error_app.run(filename)
-
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """ Gère les événements PyGame. """
@@ -114,7 +127,6 @@ class LevelScene(Scene):
         if self._taxi is None:
             return
 
-        # Mise à jour de l'astronaute
         if self._astronaut:
             self._astronaut.update()
             self._hud.set_trip_money(self._astronaut.get_trip_money())
