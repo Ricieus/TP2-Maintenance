@@ -44,7 +44,7 @@ class LevelScene(Scene):
 
         try:
             config = configparser.ConfigParser()
-            config.read(f"levels/level{1}.cfg")
+            config.read(f"levels/level{level}.cfg")
 
             self._surface = pygame.image.load(config.get("level", "surface")).convert_alpha()
             self._music = pygame.mixer.Sound(config.get("level", "music"))
@@ -56,17 +56,14 @@ class LevelScene(Scene):
 
             gate_path = config.get("gate", "gate")  # Exemple : "img/gate.png,582,3"
 
-            # Séparer le chemin de l'image et les coordonnées
-            gate_data = gate_path.split(",")  # Divise en ['img/gate.png', '582', '3']
+            gate_data = gate_path.split(",")
 
-            # Chargement de l'image
             self._gate = pygame.image.load(gate_data[0].strip()).convert_alpha()
 
             # Extraction des coordonnées (x, y)
-            x, y = map(int, gate_data[1:])  # Convertit les valeurs en entiers
+            x, y = map(int, gate_data[1:])
             self._gate_position = (x, y)
 
-            # Créer une instance de Gate avec l'image et la position
             self._gate = Gate(gate_data[0].strip(), (x, y))
 
             self._obstacles = []
