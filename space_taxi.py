@@ -15,6 +15,9 @@
   Novembre 2024
 """
 import os
+
+from black_scene import BlackScene
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import sys
@@ -34,7 +37,7 @@ def main() -> None:
     settings = GameSettings()
     screen = pygame.display.set_mode((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
     pygame.display.set_caption("Tribute to Space Taxi!")
-    window_icon = pygame.image.load('img/logo.png')
+    window_icon = pygame.image.load('img/space_taxi_icon.ico')
     pygame.display.set_icon(window_icon)
 
 
@@ -47,13 +50,17 @@ def main() -> None:
 
     scene_manager = SceneManager()
     print("Début de construction")
+    scene_manager.add_scene("black", BlackScene())
     scene_manager.add_scene("splash", SplashScene())
     scene_manager.add_scene("level1_load", LevelLoadingScene(1))
     #scene_manager.add_scene("level1", LevelScene(1))
     scene_manager.add_scene("level2_load", LevelLoadingScene(2))
     print("Fin de construction")
 
-    scene_manager.set_scene("splash")
+    scene_manager.set_scene("black")
+
+    fade_duration = 1500 #temps pour l'effet de fondu noir (1.5 secondes)
+    scene_manager.change_scene("splash", fade_duration)
 
     try:
         while True:

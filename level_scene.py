@@ -190,7 +190,7 @@ class LevelScene(Scene):
 
     def reset_money_after_crash(self):
         """Cette methode est appeler a chaque crash.
-           Remet l'argent à 0 si le taxi crash et un astronaut est a bord"""
+           Remet l'argent à 0 si le taxi crash et un astronaut est à bord"""
         astronaut_inside_taxi = self._astronaut and self._astronaut.is_onboard()
         if astronaut_inside_taxi:
             self._astronaut.set_trip_money(0.0)

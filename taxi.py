@@ -244,6 +244,7 @@ class Taxi(pygame.sprite.Sprite):
         self.rect.x = round(self._pos_x)
         self.rect.y = round(self._pos_y)
 
+
         # ÉTAPE 3 - fait entendre les réacteurs ou pas
         reactor_flags = Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_REAR_REACTOR | Taxi._FLAG_BOTTOM_REACTOR
         if self._flags & reactor_flags:
@@ -287,10 +288,19 @@ class Taxi(pygame.sprite.Sprite):
             self._acceleration_y = max(self._acceleration_y - Taxi._BOTTOM_REACTOR_POWER, -Taxi._MAX_ACCELERATION_Y_UP)
             if self._pad_landed_on:
                 self._pad_landed_on = None
+                self.hide_gear()
 
         if not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
             self._flags &= ~(Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_BOTTOM_REACTOR)
             self._acceleration_y = 0.0
+
+    def hide_gear(self) -> None:
+        """ Pour faire  rentrer le train d’atterrissage au décollage d’une plateforme. """
+        if not (self._flags & Taxi._FLAG_GEAR_OUT): #Condition pour verifier si le train d'atterrissage sont fermer
+            return #Si ils sont deja fermé, alors la fonction fais rien
+        else: #Sinon, le train d'atterrissage sont sorti
+            self._flags &= ~Taxi._FLAG_GEAR_OUT
+            self._select_image()
 
     def _reinitialize(self) -> None:
         """ Initialise (ou réinitialise) les attributs de l'instance. """
