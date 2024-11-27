@@ -20,7 +20,7 @@ class AstronautState(Enum):
 
 class Astronaut(pygame.sprite.Sprite):
     """ Un astronaute. """
-
+    _sprite_sheet = None
     _ASTRONAUT_FILENAME = "img/astronaut.png"
     _NB_WAITING_IMAGES = 1
     _NB_WAVING_IMAGES = 4
@@ -32,10 +32,10 @@ class Astronaut(pygame.sprite.Sprite):
     _WAVING_DELAYS = 10.0, 30.0
 
     # temps d'affichage pour les trames de chaque état affiché/animé
-    _FRAME_TIMES = { AstronautState.WAITING : 0.1,
-                     AstronautState.WAVING : 0.1,
-                     AstronautState.JUMPING_LEFT : 0.15,
-                     AstronautState.JUMPING_RIGHT : 0.15}
+    _FRAME_TIMES = {AstronautState.WAITING: 0.1,
+                    AstronautState.WAVING: 0.1,
+                    AstronautState.JUMPING_LEFT: 0.15,
+                    AstronautState.JUMPING_RIGHT: 0.15}
 
     _cached_frames = None
 
@@ -61,6 +61,15 @@ class Astronaut(pygame.sprite.Sprite):
             Astronaut._cached_frames = Astronaut._load_and_build_frames()
 
         self._all_frames = Astronaut._cached_frames
+
+        waiting_frames, waving_frames, jumping_left_frames, jumping_right_frames = self._all_frames
+
+        self._all_frames = {
+            AstronautState.WAITING: waiting_frames,
+            AstronautState.WAVING: waving_frames,
+            AstronautState.JUMPING_LEFT: jumping_left_frames,
+            AstronautState.JUMPING_RIGHT: jumping_right_frames
+        }
 
         self.image, self.mask = self._all_frames[AstronautState.WAITING][0]
         self.rect = self.image.get_rect()
@@ -229,25 +238,29 @@ class Astronaut(pygame.sprite.Sprite):
             clip.play()
 
     @staticmethod
-    def _load_and_build_frames() -> dict:
+    def _load_and_build_frames() -> tuple:
         """
         Charge et découpe la feuille de sprites (sprite sheet) pour un astronaute.
-        :return: un dict contenant les trames pour chaque état de l'astronaute
+        :return: un tuple contenant dans l'ordre:
+                 - une liste de trames (image, masque) pour attendre
+                 - une liste de trames (image, masque) pour envoyer la main
+                 - une liste de trames (image, masque) pour se déplacer vers la gauche
+                 - une liste de trames (image, masque) pour se déplacer vers la droite
         """
+
         nb_images = Astronaut._NB_WAITING_IMAGES + Astronaut._NB_WAVING_IMAGES + Astronaut._NB_JUMPING_IMAGES
         sprite_sheet = pygame.image.load(Astronaut._ASTRONAUT_FILENAME).convert_alpha()
         sheet_width = sprite_sheet.get_width()
         sheet_height = sprite_sheet.get_height()
-        image_size = (sheet_width / nb_images, sheet_height)
+        image_size = (sheet_width / nb_images, sheet_height)  # astronaute qui attend
 
-        # astronaute qui attend
         waiting_surface = pygame.Surface(image_size, flags=pygame.SRCALPHA)
         source_rect = waiting_surface.get_rect()
         waiting_surface.blit(sprite_sheet, (0, 0), source_rect)
         waiting_mask = pygame.mask.from_surface(waiting_surface)
-        waiting_frames = [(waiting_surface, waiting_mask)]
+        waiting_frames = [
+            (waiting_surface, waiting_mask)]  # astronaute qui envoie la main (les _NB_WAVING_IMAGES prochaines images)
 
-        # astronaute qui envoie la main (les _NB_WAVING_IMAGES prochaines images)
         waving_frames = []
         first_frame = Astronaut._NB_WAITING_IMAGES
         for frame in range(first_frame, first_frame + Astronaut._NB_WAVING_IMAGES):
@@ -257,7 +270,8 @@ class Astronaut(pygame.sprite.Sprite):
             surface.blit(sprite_sheet, (0, 0), source_rect)
             mask = pygame.mask.from_surface(surface)
             waving_frames.append((surface, mask))
-        waving_frames.extend(waving_frames[1:-1][::-1])  # reverse middle frames for looping effect
+
+        waving_frames.extend(waving_frames[1:-1][::-1])  # inverser les trames pour le mouvement de la main
 
         # astronaute qui se déplace en sautant (les _NB_JUMPING_IMAGES prochaines images)
         jumping_left_frames = []
@@ -269,17 +283,13 @@ class Astronaut(pygame.sprite.Sprite):
             source_rect.x = frame * source_rect.width
             surface.blit(sprite_sheet, (0, 0), source_rect)
             mask = pygame.mask.from_surface(surface)
-            if frame % 2 == 0:
-                jumping_left_frames.append((surface, mask))
-            else:
-                jumping_right_frames.append((surface, mask))
+            jumping_right_frames.append((surface, mask))
 
-        return {
-            AstronautState.WAITING: waiting_frames,
-            AstronautState.WAVING: waving_frames,
-            AstronautState.JUMPING_LEFT: jumping_left_frames,
-            AstronautState.JUMPING_RIGHT: jumping_right_frames
-        }
+            flipped_surface = pygame.transform.flip(surface, True, False)
+            flipped_mask = pygame.mask.from_surface(flipped_surface)
+            jumping_left_frames.append((flipped_surface, flipped_mask))
+
+        return waiting_frames, waving_frames, jumping_left_frames, jumping_right_frames
 
     @staticmethod
     def _load_clips() -> tuple:
@@ -317,5 +327,3 @@ class Astronaut(pygame.sprite.Sprite):
             fatal_error_app.run(filename)
 
             return [], [], []
-
-
