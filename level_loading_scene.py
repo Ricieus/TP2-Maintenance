@@ -3,6 +3,7 @@ from operator import truediv
 import pygame
 
 from level_scene import LevelScene
+from fatal_error import FatalError
 from scene import Scene
 from scene_manager import SceneManager
 
@@ -15,12 +16,22 @@ class LevelLoadingScene(Scene):
     def __init__(self, level: int) -> None:
         super().__init__()
         self._level = level
-        self._surface = pygame.image.load("img/loading.png").convert_alpha()
-        self._music = pygame.mixer.Sound("snd/390539__burghrecords__dystopian-future-fx-sounds-8.wav")
+        self._surface = None
+        self._music = None
         self._music_started = False
         self._fade_out_start_time = None
         self._scene_in_use = False
         print("Construit level_loading_scene ", level)
+
+        try:
+            self._surface = pygame.image.load("img/loading.png").convert_alpha()
+            self._music = pygame.mixer.Sound("snd/390539__burghrecords__dystopian-future-fx-sounds-8.wav")
+        except FileNotFoundError as e:
+            directory_plus_filename = str(e).split("'")[1]
+            filename = directory_plus_filename.split("/")[-1]
+            fatal_error_app = FatalError()
+            fatal_error_app.run(filename)
+
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
