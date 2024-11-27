@@ -1,3 +1,5 @@
+from operator import truediv
+
 import pygame
 
 from level_scene import LevelScene
@@ -29,7 +31,11 @@ class LevelLoadingScene(Scene):
 
     def update(self, delta_time: float) -> None:
         if not self._scene_in_use:
-            SceneManager().add_scene(f"level{self._level}", LevelScene(self._level))
+            if self.check_level():
+                SceneManager().add_scene(f"level{self._level}", LevelScene(self._level))
+
+            else:
+                SceneManager().change_scene("game_over", LevelLoadingScene._FADE_OUT_DURATION)
             self._scene_in_use = True
 
         if not self._music_started:
@@ -48,3 +54,8 @@ class LevelLoadingScene(Scene):
 
     def surface(self) -> pygame.Surface:
         return self._surface
+
+    def check_level(self) -> bool:
+        if self._level == 1:
+            return True
+        return False

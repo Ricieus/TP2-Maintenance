@@ -17,6 +17,7 @@
 import os
 
 from black_scene import BlackScene
+from game_over_scene import GameOver
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
@@ -55,6 +56,7 @@ def main() -> None:
     scene_manager.add_scene("level1_load", LevelLoadingScene(1))
     #scene_manager.add_scene("level1", LevelScene(1))
     scene_manager.add_scene("level2_load", LevelLoadingScene(2))
+    scene_manager.add_scene("game_over", GameOver())
     print("Fin de construction")
 
     scene_manager.set_scene("black")
