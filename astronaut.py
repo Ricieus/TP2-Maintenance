@@ -327,3 +327,4 @@ class Astronaut(pygame.sprite.Sprite):
             fatal_error_app.run(filename)
 
             return [], [], []
+
