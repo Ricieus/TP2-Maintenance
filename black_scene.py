@@ -12,7 +12,7 @@ class BlackScene(Scene):
     def handle_event(self, event: pygame.event.Event) -> None:
         pass
 
-    def update(self, delta_time: float) -> None:
+    def update(self) -> None:
         pass
 
     def render(self, screen: pygame.Surface) -> None:

@@ -80,7 +80,7 @@ def main() -> None:
             pygame.display.flip()
 
     except KeyboardInterrupt:
-        quit_game()s
+        quit_game()
 
 
 def quit_game() -> None:
