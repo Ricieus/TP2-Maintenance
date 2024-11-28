@@ -54,15 +54,15 @@ def main() -> None:
     scene_manager.add_scene("black", BlackScene())
     scene_manager.add_scene("splash", SplashScene())
     scene_manager.add_scene("level1_load", LevelLoadingScene(1))
-    #scene_manager.add_scene("level1", LevelScene(1))
+    scene_manager.add_scene("level1", LevelScene(1))
     scene_manager.add_scene("level2_load", LevelLoadingScene(2))
     scene_manager.add_scene("game_over", GameOver())
     print("Fin de construction")
 
     scene_manager.set_scene("black")
 
-    fade_duration = 1500 #temps pour l'effet de fondu noir (1.5 secondes)
-    scene_manager.change_scene("splash", fade_duration)
+    fade_time = 1500 #temps pour l'effet de fondu noir (1.5 secondes)
+    scene_manager.change_scene("splash", fade_time)
 
     try:
         while True:

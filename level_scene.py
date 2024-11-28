@@ -1,3 +1,5 @@
+import os.path
+
 import pygame
 import time
 import configparser
@@ -137,7 +139,10 @@ class LevelScene(Scene):
                         self._taxi.unboard_astronaut()
                         self._taxi = None
                         self._fade_out_start_time = pygame.time.get_ticks()
-                        SceneManager().change_scene(f"level{self._level + 1}_load", LevelScene._FADE_OUT_DURATION)
+                        if os.path.exists(f"Levels/level{self._level + 1}_load.cfg"):
+                            SceneManager().change_scene(f"level{self._level + 1}_load", LevelScene._FADE_OUT_DURATION)
+                        else:
+                            SceneManager().change_scene("game_over", LevelScene._FADE_OUT_DURATION)
                         return
             elif self._astronaut.has_reached_destination():
                 if self._nb_taxied_astronauts < len(self._astronauts) - 1:
@@ -183,6 +188,8 @@ class LevelScene(Scene):
             elif self._taxi.refuel_from(pump):
                 pass  # Effets secondaires de remplissage de réservoir ici
 
+        self.game_over_validation()
+
     def render(self, screen: pygame.Surface) -> None:
         """
         Effectue le rendu du niveau pour l'afficher à l'écran.
@@ -211,11 +218,7 @@ class LevelScene(Scene):
     def _retry_current_astronaut(self) -> None:
         """ Replace le niveau dans l'état où il était avant la course actuelle. """
         self._gate.close()
-        self._astronauts = [Astronaut(self._pads[3], self._pads[0], 20.00),
-                            Astronaut(self._pads[2], self._pads[4], 20.00),
-                            Astronaut(self._pads[0], self._pads[1], 20.00),
-                            Astronaut(self._pads[4], self._pads[2], 20.00),
-                            Astronaut(self._pads[1], self._pads[3], 20.00),
+        self._astronauts = [
                             Astronaut(self._pads[0], Pad.UP, 20.00)]
         self._astronaut = None
 
@@ -225,3 +228,7 @@ class LevelScene(Scene):
         astronaut_inside_taxi = self._astronaut and self._astronaut.is_onboard()
         if astronaut_inside_taxi:
             self._astronaut.set_trip_money(0.0)
+
+    def game_over_validation(self) -> bool:
+        if self._hud.get_lives() <= 0: #Condition pour voir si le joueur n'a pas de vie
+            SceneManager().change_scene("game_over", LevelScene._FADE_OUT_DURATION) #Si le joueur n'a pas de vie, alors ca change le scène à game_over
