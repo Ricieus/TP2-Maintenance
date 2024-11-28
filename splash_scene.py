@@ -9,6 +9,7 @@ class SplashScene(Scene):
     """ Scène titre (splash). """
 
     _FADE_OUT_DURATION: int = 1500  # ms
+    FADE_IN_DURATION: int = 1500  # ms
 
     def __init__(self) -> None:
         super().__init__()

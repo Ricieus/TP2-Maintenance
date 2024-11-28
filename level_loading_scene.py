@@ -24,8 +24,8 @@ class LevelLoadingScene(Scene):
         self._scene_in_use = False
 
         try:
-            self._surface = pygame.image.load("img/loading.png").convert_alpha()
-            self._music = pygame.mixer.Sound("snd/390539__burghrecords__dystopian-future-fx-sounds-8.wav")
+            self._surface = pygame.image.load(GameSettings.FILE_NAMES[Files.IMG_LOADING]).convert_alpha()
+            self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_MUSIC_LOADING])
         except FileNotFoundError as e:
             directory_plus_filename = str(e).split("'")[1]
             filename = directory_plus_filename.split("/")[-1]

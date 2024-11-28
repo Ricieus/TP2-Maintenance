@@ -58,9 +58,7 @@ def main() -> None:
     print("Fin de construction")
 
     scene_manager.set_scene("black")
-
-    scene_manager.change_scene("splash", fade_time)
-
+    scene_manager.change_scene("splash", SplashScene.FADE_IN_DURATION)
     try:
         while True:
             delta_time = clock.tick(settings.FPS) / 1000
@@ -82,7 +80,7 @@ def main() -> None:
             pygame.display.flip()
 
     except KeyboardInterrupt:
-        quit_game()
+        quit_game()s
 
 
 def quit_game() -> None:

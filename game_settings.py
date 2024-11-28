@@ -22,6 +22,7 @@ class Files(Enum):
     IMG_TAXIS = auto()
     SND_REACTOR = auto()
     SND_CRASH = auto()
+    CFG_LEVEL = auto()
 
 
 class GameSettings:
@@ -34,6 +35,7 @@ class GameSettings:
     NB_PLAYER_LIVES = 5
 
     FILE_NAMES = {
+        Files.CFG_LEVEL: "levels/level#.cfg",
         Files.FONT: "fonts/boombox2.ttf",
         Files.IMG_ASTRONAUT: "img/astronaut.png",
         Files.VOICES_ASTRONAUT_HEY_TAXI: [
