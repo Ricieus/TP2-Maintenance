@@ -27,7 +27,7 @@ class LevelLoadingScene(Scene):
 
                 SceneManager().change_scene(f"level{self._level}", LevelLoadingScene._FADE_OUT_DURATION)
 
-    def update(self, delta_time: float) -> None:
+    def update(self) -> None:
         if not self._scene_in_use: # Pour exécuter une seule fois.
             SceneManager().add_scene(f"level{self._level}", LevelScene(self._level))
             self._scene_in_use = True
