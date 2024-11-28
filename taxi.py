@@ -2,8 +2,8 @@ from enum import Enum, auto
 
 import pygame
 
-from astronaut import Astronaut
 from game_settings import GameSettings, Files
+from astronaut import Astronaut, AstronautState
 from hud import HUD
 from obstacle import Obstacle
 from pad import Pad
@@ -81,12 +81,13 @@ class Taxi(pygame.sprite.Sprite):
     def board_astronaut(self, astronaut: Astronaut) -> None:
         self._astronaut = astronaut
 
-    def crash_on_obstacle(self, obstacle: Obstacle) -> bool:
+    def crash_on_obstacle(self, obstacle: pygame.sprite.Sprite):
         """
         Vérifie si le taxi est en situation de crash contre un obstacle.
         :param obstacle: obstacle avec lequel vérifier
         :return: True si le taxi est en contact avec l'obstacle, False sinon
         """
+
         if self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED:
             return False
 
@@ -95,51 +96,11 @@ class Taxi(pygame.sprite.Sprite):
                 self._flags = self._FLAG_DESTROYED
                 self._crash_sound.play()
                 self._velocity_x = 0.0
+                self._velocity_y = 0.0
                 self._acceleration_x = 0.0
                 self._acceleration_y = Taxi._CRASH_ACCELERATION
+
                 return True
-
-        return False
-
-    def crash_on_pad(self, pad: Pad) -> bool:
-        """
-        Vérifie si le taxi est en situation de crash contre une plateforme.
-        :param pad: plateforme avec laquelle vérifier
-        :return: True si le taxi est en contact avec la plateforme, False sinon
-        """
-        if self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED:
-            return False
-
-        if self.rect.colliderect(pad.rect):
-            if pygame.sprite.collide_mask(self, pad):
-                self._flags = self._FLAG_DESTROYED
-                self._crash_sound.play()
-                self._velocity_x = 0.0
-                self._acceleration_x = 0.0
-                self._acceleration_y = Taxi._CRASH_ACCELERATION
-                return True
-
-        return False
-
-    def crash_on_pump(self, pump: Pump) -> bool:
-        """
-        Vérifie si le taxi est en situation de crash contre une pompe.
-        :param pump: pompe avec laquelle vérifier
-        :return: True si le taxi est en contact avec la pompe, False sinon
-        """
-        if self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED:
-            return False
-
-        if self.rect.colliderect(pump.rect):
-            if pygame.sprite.collide_mask(self, pump):
-                self._flags = self._FLAG_DESTROYED
-                self._crash_sound.play()
-                self._velocity_x = 0.0
-                self._acceleration_x = 0.0
-                self._acceleration_y = Taxi._CRASH_ACCELERATION
-                return True
-
-        return False
 
     def draw(self, surface: pygame.Surface) -> None:
         """ Dessine le taxi sur la surface fournie comme argument. """
@@ -147,7 +108,7 @@ class Taxi(pygame.sprite.Sprite):
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """ Gère les événements du taxi. """
-        if event.type == pygame.KEYDOWN: # redondant ? (il se trouve deja ce if dans la méthode handle_event de la classe level_scene) -Marc
+        if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 if self._pad_landed_on is None:
                     if self._flags & Taxi._FLAG_GEAR_OUT != Taxi._FLAG_GEAR_OUT:
@@ -176,8 +137,14 @@ class Taxi(pygame.sprite.Sprite):
 
         if self.rect.colliderect(astronaut.rect):
             if pygame.sprite.collide_mask(self, astronaut):
+                if astronaut._velocity != 0:
+                    astronaut._state = AstronautState.REACHED_DESTINATION
+                    hitting_fines = self._hud._last_saved_money / 2
+                    self._hud._bank_money -= hitting_fines
+                    self._hud._bank_money_surface = self._hud._render_bank_money_surface()
+                    self._hud._last_saved_money = 0.0
+                    return False
                 return True
-
         return False
 
     def is_destroyed(self) -> bool:
@@ -185,6 +152,7 @@ class Taxi(pygame.sprite.Sprite):
         Vérifie si le taxi est détruit.
         :return: True si le taxi est détruit, False sinon
         """
+
         return self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED
 
     def land_on_pad(self, pad: Pad) -> bool:
@@ -201,6 +169,19 @@ class Taxi(pygame.sprite.Sprite):
             return False
 
         if not self.rect.colliderect(pad.rect):
+            return False
+
+        taxi_edges_position = (self.rect.left, self.rect.right) #tuple qui prend le position gauche et droite de taxi
+        platform_edges_position = (pad.rect.left, pad.rect.right) #tuple qui prend le position gauche et droite de plateforme
+
+        #Condition vérifie si le bord gauche de taxi dépasse le position gauche du plateforme ou si le bord droite du taxi dépasse le position du plateforme a droite
+        if taxi_edges_position[0] < platform_edges_position[0] or taxi_edges_position[1] > platform_edges_position[1]:
+            self._flags = self._FLAG_DESTROYED
+            self._crash_sound.play()
+            self._velocity_x = 0.0
+            self._velocity_y = 0.0
+            self._acceleration_x = 0.0
+            self._acceleration_y = Taxi._CRASH_ACCELERATION
             return False
 
         if pygame.sprite.collide_mask(self, pad):
@@ -236,7 +217,7 @@ class Taxi(pygame.sprite.Sprite):
     def unboard_astronaut(self) -> None:
         """ Fait descendre l'astronaute qui se trouve à bord. """
         if self._astronaut.target_pad is not Pad.UP:
-            self._astronaut.move(self.rect.x + 20, self._pad_landed_on.rect.y - self._astronaut.rect.height)
+            self._astronaut.move(self.rect.x, self._pad_landed_on.rect.y - self._astronaut.rect.height)
             self._astronaut.jump(self._pad_landed_on.astronaut_end.x)
 
         self._hud.add_bank_money(self._astronaut.get_trip_money())
@@ -283,9 +264,6 @@ class Taxi(pygame.sprite.Sprite):
             return
 
         keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_RIGHT] and keys[pygame.K_LEFT] or keys[pygame.K_UP] and keys[pygame.K_DOWN]:
-            return
 
         gear_out = self._flags & Taxi._FLAG_GEAR_OUT == Taxi._FLAG_GEAR_OUT
 

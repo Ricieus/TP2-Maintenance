@@ -130,18 +130,22 @@ class LevelScene(Scene):
         for pad in self._pads:
             if self._taxi.land_on_pad(pad):
                 pass  # introduire les effets secondaires d'un atterrissage ici
-            elif self._taxi.crash_on_pad(pad):
+            elif self._taxi.crash_on_obstacle(pad):
+                self.reset_money_after_crash()
                 self._hud.loose_live()
 
         for obstacle in self._obstacles:
             if self._taxi.crash_on_obstacle(obstacle):
+                self.reset_money_after_crash()
                 self._hud.loose_live()
 
         if self._gate.is_closed() and self._taxi.crash_on_obstacle(self._gate):
+            self.reset_money_after_crash()
             self._hud.loose_live()
 
         for pump in self._pumps:
-            if self._taxi.crash_on_pump(pump):
+            if self._taxi.crash_on_obstacle(pump):
+                self.reset_money_after_crash()
                 self._hud.loose_live()
             elif self._taxi.refuel_from(pump):
                 pass  # introduire les effets secondaires de remplissage de réservoir ici
@@ -182,3 +186,10 @@ class LevelScene(Scene):
                             Astronaut(self._pads[0], Pad.UP, 20.00)]
         self._last_taxied_astronaut_time = time.time()
         self._astronaut = None
+
+    def reset_money_after_crash(self):
+        """Cette methode est appeler a chaque crash.
+           Remet l'argent à 0 si le taxi crash et un astronaut est a bord"""
+        astronaut_inside_taxi = self._astronaut and self._astronaut.is_onboard()
+        if astronaut_inside_taxi:
+            self._astronaut.set_trip_money(0.0)
