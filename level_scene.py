@@ -130,7 +130,11 @@ class LevelScene(Scene):
         if self._taxi:
             self._taxi.handle_event(event)
 
-    def update(self, delta_time: float) -> None:
+    def update(self) -> None:
+        """
+        Met à jour le niveau de jeu. Cette méthode est appelée à chaque itération de la boucle de jeu.
+        :param delta_time: temps écoulé (en secondes) depuis la dernière trame affichée
+        """
         # Initialisation de la musique si ce n'est pas déjà fait
         if not self._music_started:
             self._music.play(-1)
