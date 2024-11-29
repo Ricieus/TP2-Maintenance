@@ -172,7 +172,23 @@ class Taxi(pygame.sprite.Sprite):
             return False
 
         taxi_edges_position = (self.rect.left, self.rect.right) #tuple qui prend le position gauche et droite de taxi
-        platform_edges_position = (pad.rect.left, pad.rect.right) #tuple qui prend le position gauche et droite de plateforme
+
+        visible_platform = 0
+        invisible_left_image = 0
+        invisible_right_image = 0
+
+        pad.image.lock()
+        for x in range(pad.image.get_width()): #TODO: à refactoriser
+            r, g, b, a = pad.image.get_at((x, 0))
+            if a != 0:
+                visible_platform += 1
+            elif a == 0 and visible_platform == 0:
+                invisible_left_image += 1
+            elif a == 0:
+                invisible_right_image += 1
+        pad.image.unlock()
+
+        platform_edges_position = (pad.rect.left + invisible_left_image, pad.rect.right - invisible_right_image)
 
         #Condition vérifie si le bord gauche de taxi dépasse le position gauche du plateforme ou si le bord droite du taxi dépasse le position du plateforme a droite
         if taxi_edges_position[0] < platform_edges_position[0] or taxi_edges_position[1] > platform_edges_position[1]:

@@ -59,6 +59,7 @@ def main() -> None:
 
     scene_manager.set_scene("black")
     scene_manager.change_scene("splash", SplashScene.FADE_IN_DURATION)
+
     try:
         while True:
             clock.tick(settings.FPS) / 1000

@@ -45,7 +45,7 @@ class LevelScene(Scene):
 
         try:
             config = configparser.ConfigParser()
-            config.read(GameSettings.FILE_NAMES[Files.CFG_LEVEL].replace("#", str(level)))
+            config.read(GameSettings.FILE_NAMES[Files.CFG_LEVEL].replace("#", str(self._level)))
 
             self._surface = pygame.image.load(config.get("level", "surface")).convert_alpha()
             self._music = pygame.mixer.Sound(config.get("level", "music"))
@@ -146,7 +146,7 @@ class LevelScene(Scene):
                         self._taxi.unboard_astronaut()
                         self._taxi = None
                         self._fade_out_start_time = pygame.time.get_ticks()
-                        if os.path.exists(f"levels/level{self._level + 1}_load.cfg"):
+                        if os.path.exists(GameSettings.FILE_NAMES[Files.CFG_LEVEL].replace("#", str(self._level + 1))):
                             SceneManager().change_scene(f"level{self._level + 1}_load", LevelScene._FADE_OUT_DURATION)
                         else:
                             SceneManager().change_scene("game_over", LevelScene._FADE_OUT_DURATION)
