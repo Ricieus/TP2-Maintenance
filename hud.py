@@ -30,6 +30,7 @@ class HUD:
 
             self._trip_money = 0
             self._last_saved_money = 0
+            self.last_saved_money = None
             self._trip_money_surface = self._render_trip_money_surface()
 
             self._lives = self._settings.NB_PLAYER_LIVES
