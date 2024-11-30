@@ -272,10 +272,11 @@ class Astronaut(pygame.sprite.Sprite):
             source_rect.x = frame * source_rect.width
             surface.blit(sprite_sheet, (0, 0), source_rect)
             mask = pygame.mask.from_surface(surface)
-            if frame % 2 == 0:
-                jumping_left_frames.append((surface, mask))
-            else:
-                jumping_right_frames.append((surface, mask))
+            jumping_right_frames.append((surface, mask))
+
+            flipped_surface = pygame.transform.flip(surface, True, False)
+            flipped_mask = pygame.mask.from_surface(flipped_surface)
+            jumping_left_frames.append((flipped_surface, flipped_mask))
 
         return {
             AstronautState.WAITING: waiting_frames,
