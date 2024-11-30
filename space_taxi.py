@@ -15,13 +15,16 @@
   Novembre 2024
 """
 import os
+
+from black_scene import BlackScene
+from game_over_scene import GameOver
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import sys
 
 from game_settings import GameSettings
 from level_loading_scene import LevelLoadingScene
-from level_scene import LevelScene
 from scene_manager import SceneManager
 from splash_scene import SplashScene
 
@@ -34,7 +37,7 @@ def main() -> None:
     settings = GameSettings()
     screen = pygame.display.set_mode((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
     pygame.display.set_caption("Tribute to Space Taxi!")
-    window_icon = pygame.image.load('img/logo.png')
+    window_icon = pygame.image.load('img/space_taxi_icon.ico')
     pygame.display.set_icon(window_icon)
 
 
@@ -47,20 +50,21 @@ def main() -> None:
 
     scene_manager = SceneManager()
     print("Début de construction")
+    scene_manager.add_scene("black", BlackScene())
     scene_manager.add_scene("splash", SplashScene())
     scene_manager.add_scene("level1_load", LevelLoadingScene(1))
-    #scene_manager.add_scene("level1", LevelScene(1))
     scene_manager.add_scene("level2_load", LevelLoadingScene(2))
+    scene_manager.add_scene("game_over", GameOver())
     print("Fin de construction")
 
-    scene_manager.set_scene("splash")
+    scene_manager.set_scene("black")
+    scene_manager.change_scene("splash", SplashScene.FADE_IN_DURATION)
 
     try:
         while True:
+            clock.tick(settings.FPS) / 1000
 
-            delta_time = clock.tick(settings.FPS) / 1000  # en secondes
-
-            scene_manager.update(delta_time)
+            scene_manager.update()
 
             scene_manager.render(screen)
 

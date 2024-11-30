@@ -10,7 +10,7 @@ class Scene(ABC):
         pass
 
     @abstractmethod
-    def update(self, delta_time: float) -> None:
+    def update(self) -> None:
         pass
 
     @abstractmethod
