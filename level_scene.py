@@ -1,10 +1,12 @@
+import os.path
+
 import pygame
 import time
 import configparser
 
 from astronaut import Astronaut
+from game_settings import GameSettings, Files
 from fatal_error import FatalError
-from game_settings import GameSettings
 from gate import Gate
 from hud import HUD
 from obstacle import Obstacle
@@ -27,7 +29,6 @@ class LevelScene(Scene):
         :param level: le numéro de niveau
         """
         super().__init__()
-        print("Construit level_scene ", level)
         self._level = level
         self._surface = None
         self._music = None
@@ -44,17 +45,21 @@ class LevelScene(Scene):
 
         try:
             config = configparser.ConfigParser()
-            config.read(f"levels/level{level}.cfg")
+            config.read(GameSettings.FILE_NAMES[Files.CFG_LEVEL].replace("#", str(self._level)))
 
             self._surface = pygame.image.load(config.get("level", "surface")).convert_alpha()
             self._music = pygame.mixer.Sound(config.get("level", "music"))
+
+            self._gate = Gate(GameSettings.FILE_NAMES[Files.IMG_GATE], (582, 3))
+
+
 
             self._settings = GameSettings()
             self._hud = HUD()
 
             self._taxi = Taxi((self._settings.SCREEN_WIDTH / 2, self._settings.SCREEN_HEIGHT / 2))
 
-            gate_path = config.get("gate", "gate")  # Exemple : "img/gate.png,582,3"
+            gate_path = config.get("gate", "gate")
 
             gate_data = gate_path.split(",")
 
@@ -107,7 +112,11 @@ class LevelScene(Scene):
         if self._taxi:
             self._taxi.handle_event(event)
 
-    def update(self, delta_time: float) -> None:
+    def update(self) -> None:
+        """
+        Met à jour le niveau de jeu. Cette méthode est appelée à chaque itération de la boucle de jeu.
+        :param delta_time: temps écoulé (en secondes) depuis la dernière trame affichée
+        """
         # Initialisation de la musique si ce n'est pas déjà fait
         if not self._music_started:
             self._music.play(-1)
@@ -137,7 +146,10 @@ class LevelScene(Scene):
                         self._taxi.unboard_astronaut()
                         self._taxi = None
                         self._fade_out_start_time = pygame.time.get_ticks()
-                        SceneManager().change_scene(f"level{self._level + 1}_load", LevelScene._FADE_OUT_DURATION)
+                        if os.path.exists(GameSettings.FILE_NAMES[Files.CFG_LEVEL].replace("#", str(self._level + 1))):
+                            SceneManager().change_scene(f"level{self._level + 1}_load", LevelScene._FADE_OUT_DURATION)
+                        else:
+                            SceneManager().change_scene("game_over", LevelScene._FADE_OUT_DURATION)
                         return
             elif self._astronaut.has_reached_destination():
                 if self._nb_taxied_astronauts < len(self._astronauts) - 1:
@@ -183,6 +195,8 @@ class LevelScene(Scene):
             elif self._taxi.refuel_from(pump):
                 pass  # Effets secondaires de remplissage de réservoir ici
 
+        self.game_over_validation()
+
     def render(self, screen: pygame.Surface) -> None:
         """
         Effectue le rendu du niveau pour l'afficher à l'écran.
@@ -217,11 +231,16 @@ class LevelScene(Scene):
                             Astronaut(self._pads[4], self._pads[2], 20.00),
                             Astronaut(self._pads[1], self._pads[3], 20.00),
                             Astronaut(self._pads[0], Pad.UP, 20.00)]
+        self._last_taxied_astronaut_time = time.time()
         self._astronaut = None
 
     def reset_money_after_crash(self):
         """Cette methode est appeler a chaque crash.
-           Remet l'argent à 0 si le taxi crash et un astronaut est a bord"""
+           Remet l'argent à 0 si le taxi crash et un astronaut est à bord"""
         astronaut_inside_taxi = self._astronaut and self._astronaut.is_onboard()
         if astronaut_inside_taxi:
             self._astronaut.set_trip_money(0.0)
+
+    def game_over_validation(self):
+        if self._hud.get_lives() <= 0: #Condition pour voir si le joueur n'a pas de vie
+            SceneManager().change_scene("game_over", LevelScene._FADE_OUT_DURATION) #Si le joueur n'a pas de vie, alors ca change le scène à game_over

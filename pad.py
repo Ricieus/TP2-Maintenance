@@ -34,10 +34,21 @@ class Pad(pygame.sprite.Sprite):
         background_width = text_width + background_height  # + hauteur, pour les coins arrondis
         self._label_background = Pad._build_label(background_width, background_height)
 
-        self._label_text_offset = ((self.image.get_width() - text_width) / 2 + 1, 3)
-        self._label_background_offset = ((self.image.get_width() - background_width) / 2, 2)
+        visible_pixels_pad = 0
+        transparent_pixels_pad = 0
+        self.image.lock()
+        for x in range(self.image.get_width()):
+            r, g, b, a = self.image.get_at((x, 0))
+            if a != 0:
+                visible_pixels_pad += 1
+            elif a == 0 and visible_pixels_pad == 0:
+                transparent_pixels_pad += 1
+        self.image.unlock()
 
-        self.image.blit(self._label_background, self._label_background_offset)#, special_flags = pygame.BLEND_RGBA_ADD)
+        self._label_text_offset = ((visible_pixels_pad - text_width) / 2 + transparent_pixels_pad + 1, 3)
+        self._label_background_offset = ((visible_pixels_pad - background_width) / 2 + transparent_pixels_pad, 2)
+
+        self.image.blit(self._label_background, self._label_background_offset)
         self.image.blit(self._label_text, self._label_text_offset)
 
         self.rect = self.image.get_rect()

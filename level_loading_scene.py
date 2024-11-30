@@ -1,9 +1,12 @@
+from operator import truediv
+
 import pygame
 
 from level_scene import LevelScene
 from fatal_error import FatalError
 from scene import Scene
 from scene_manager import SceneManager
+from game_settings import GameSettings, Files
 
 
 class LevelLoadingScene(Scene):
@@ -14,16 +17,15 @@ class LevelLoadingScene(Scene):
     def __init__(self, level: int) -> None:
         super().__init__()
         self._level = level
-        self._surface = None
-        self._music = None
+        self._surface = pygame.image.load(GameSettings.FILE_NAMES[Files.IMG_LOADING]).convert_alpha()
+        self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_MUSIC_LOADING])
         self._music_started = False
         self._fade_out_start_time = None
         self._scene_in_use = False
-        print("Construit level_loading_scene ", level)
 
         try:
-            self._surface = pygame.image.load("img/loading.png").convert_alpha()
-            self._music = pygame.mixer.Sound("snd/390539__burghrecords__dystopian-future-fx-sounds-8.wav")
+            self._surface = pygame.image.load(GameSettings.FILE_NAMES[Files.IMG_LOADING]).convert_alpha()
+            self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_MUSIC_LOADING])
         except FileNotFoundError as e:
             directory_plus_filename = str(e).split("'")[1]
             filename = directory_plus_filename.split("/")[-1]
@@ -38,8 +40,8 @@ class LevelLoadingScene(Scene):
 
                 SceneManager().change_scene(f"level{self._level}", LevelLoadingScene._FADE_OUT_DURATION)
 
-    def update(self, delta_time: float) -> None:
-        if not self._scene_in_use:
+    def update(self) -> None:
+        if not self._scene_in_use: # Pour exécuter une seule fois.
             SceneManager().add_scene(f"level{self._level}", LevelScene(self._level))
             self._scene_in_use = True
 
