@@ -4,6 +4,7 @@ import time
 
 from enum import Enum, auto
 
+from hud import HUD
 from game_settings import GameSettings, Files
 from fatal_error import FatalError
 from pad import Pad
@@ -79,6 +80,8 @@ class Astronaut(pygame.sprite.Sprite):
         self._state_time = 0  # temps écoulé dans l'état actuel
         self._current_frame = 0
         self._last_frame_time = time.time()
+
+        self._hud = HUD()
 
     @property
     def source_pad(self) -> Pad:
@@ -206,8 +209,10 @@ class Astronaut(pygame.sprite.Sprite):
                     self._state = AstronautState.ONBOARD
                     if self._target_pad is None:
                         self._pad_please_clips[0].play()
+                        self._hud.set_current_pad("UP")
                     else:
                         self._pad_please_clips[self._target_pad.number].play()
+                        self._hud.set_current_pad(str(self._target_pad.number))
 
                 return
 
