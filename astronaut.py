@@ -8,6 +8,7 @@ from hud import HUD
 from game_settings import GameSettings, Files
 from fatal_error import FatalError
 from pad import Pad
+from random import randint
 
 
 class AstronautState(Enum):
@@ -18,6 +19,7 @@ class AstronautState(Enum):
     JUMPING_LEFT = auto()
     ONBOARD = auto()
     REACHED_DESTINATION = auto()
+    INTEGRATION = auto()
 
 
 class Astronaut(pygame.sprite.Sprite):
@@ -27,6 +29,7 @@ class Astronaut(pygame.sprite.Sprite):
     _NB_WAITING_IMAGES = 1
     _NB_WAVING_IMAGES = 4
     _NB_JUMPING_IMAGES = 6
+    _NB_INTEGRATION_IMAGES = 10
 
     _VELOCITY = 0.2
     _LOOSE_ONE_CENT_EVERY = 0.05  # perd 1 cent tous les 5 centièmes de seconde
@@ -35,6 +38,7 @@ class Astronaut(pygame.sprite.Sprite):
 
     # temps d'affichage pour les trames de chaque état affiché/animé
     _FRAME_TIMES = { AstronautState.WAITING : 0.1,
+                     AstronautState.INTEGRATION: 0.1,
                      AstronautState.WAVING : 0.1,
                      AstronautState.JUMPING_LEFT : 0.15,
                      AstronautState.JUMPING_RIGHT : 0.15}
@@ -75,7 +79,7 @@ class Astronaut(pygame.sprite.Sprite):
 
         self._waving_delay = 0  # temps avant d'envoyer la main (0 initialement, aléatoire ensuite)
 
-        self._state = AstronautState.WAITING
+        self._state = AstronautState.INTEGRATION
         self._frames = self._all_frames[self._state]
         self._state_time = 0  # temps écoulé dans l'état actuel
         self._current_frame = 0
@@ -185,7 +189,16 @@ class Astronaut(pygame.sprite.Sprite):
 
         # ÉTAPE 3 - changer d'état si le moment est venu
         self._state_time += current_time - self._last_frame_time
-        if self._state == AstronautState.WAITING:
+
+        if self._state == AstronautState.INTEGRATION:
+            last_frame = self._current_frame == len(self._frames) - 1
+            spent_state_time = self._state_time >= self._FRAME_TIMES[AstronautState.INTEGRATION] * len(self._frames)
+            if last_frame and spent_state_time:
+                self._state = AstronautState.WAITING
+                self._state_time = 0
+                self._frames = self._all_frames[AstronautState.WAITING]
+                self._current_frame = 0
+        elif self._state == AstronautState.WAITING:
             if self._state_time >= self._waving_delay:
                 self._call_taxi()
                 self._state = AstronautState.WAVING
@@ -253,6 +266,28 @@ class Astronaut(pygame.sprite.Sprite):
         waiting_mask = pygame.mask.from_surface(waiting_surface)
         waiting_frames = [(waiting_surface, waiting_mask)]
 
+        # astronaute qui s'intègre
+        integration_frames = []
+        for frame in range(Astronaut._NB_INTEGRATION_IMAGES):
+            surface = pygame.Surface(image_size, flags=pygame.SRCALPHA)
+            source_rect = surface.get_rect()
+            surface.blit(sprite_sheet, (0, 0), source_rect)
+            mask = pygame.mask.from_surface(surface)
+            surface_width = surface.get_width()
+            surface_height = surface.get_height()
+            surface_part = (surface_height / Astronaut._NB_INTEGRATION_IMAGES) * frame
+            reversed_surface_part = surface_height - surface_part
+            surface.lock()
+            for x in range(surface_width):
+                for y in range(surface_height):
+                    if y < reversed_surface_part:
+                        r, g, b, a = surface.get_at((x, y))
+                        erase_pixel = randint(0, 2) > 0
+                        if erase_pixel:
+                            surface.set_at((x, y), (r, g, b, 0))
+            surface.unlock()
+            integration_frames.append((surface, mask))
+
         # astronaute qui envoie la main (les _NB_WAVING_IMAGES prochaines images)
         waving_frames = []
         first_frame = Astronaut._NB_WAITING_IMAGES
@@ -285,6 +320,7 @@ class Astronaut(pygame.sprite.Sprite):
 
         return {
             AstronautState.WAITING: waiting_frames,
+            AstronautState.INTEGRATION: integration_frames,
             AstronautState.WAVING: waving_frames,
             AstronautState.JUMPING_LEFT: jumping_left_frames,
             AstronautState.JUMPING_RIGHT: jumping_right_frames
@@ -323,5 +359,3 @@ class Astronaut(pygame.sprite.Sprite):
             fatal_error_app.run(filename)
 
             return [], [], []
-
-
