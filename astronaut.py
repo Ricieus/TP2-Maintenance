@@ -38,12 +38,12 @@ class Astronaut(pygame.sprite.Sprite):
     _WAVING_DELAYS = 10.0, 30.0
 
     # temps d'affichage pour les trames de chaque état affiché/animé
-    _FRAME_TIMES = { AstronautState.WAITING : 0.1,
-                     AstronautState.INTEGRATING: 0.1,
-                     AstronautState.DISINTEGRATING: 0.1,
-                     AstronautState.WAVING : 0.1,
-                     AstronautState.JUMPING_LEFT : 0.15,
-                     AstronautState.JUMPING_RIGHT : 0.15}
+    _FRAME_TIMES = {AstronautState.WAITING: 0.1,
+                    AstronautState.INTEGRATING: 0.1,
+                    AstronautState.DISINTEGRATING: 0.1,
+                    AstronautState.WAVING: 0.1,
+                    AstronautState.JUMPING_LEFT: 0.15,
+                    AstronautState.JUMPING_RIGHT: 0.15}
 
     _cached_frames = None
 
@@ -70,16 +70,24 @@ class Astronaut(pygame.sprite.Sprite):
 
         self._all_frames = Astronaut._cached_frames
 
-        waiting_frames, waving_frames, jumping_left_frames, jumping_right_frames = self._all_frames
+        waiting_frames, integrating_frames, disintegrating_frames, waving_frames, jumping_left_frames, jumping_right_frames  = self._all_frames
 
         self._all_frames = {
             AstronautState.WAITING: waiting_frames,
             AstronautState.WAVING: waving_frames,
             AstronautState.JUMPING_LEFT: jumping_left_frames,
-            AstronautState.JUMPING_RIGHT: jumping_right_frames
+            AstronautState.JUMPING_RIGHT: jumping_right_frames,
+            AstronautState.INTEGRATING: integrating_frames,
+            AstronautState.DISINTEGRATING: disintegrating_frames
         }
 
-        self.image, self.mask = self._all_frames[AstronautState.WAITING][0]
+        self._state = AstronautState.INTEGRATING
+        self._frames = self._all_frames[self._state]
+        self._state_time = 0  # temps écoulé dans l'état actuel
+        self._current_frame = 0
+        self._last_frame_time = time.time()
+
+        self.image, self.mask = self._frames[0]
         self.rect = self.image.get_rect()
         self.rect.x = self._source_pad.astronaut_start.x
         self.rect.y = self._source_pad.astronaut_start.y
@@ -161,7 +169,6 @@ class Astronaut(pygame.sprite.Sprite):
         """
         self.rect.x = x
         self.rect.y = y
-
 
     def unboard(self, x: int, y: int):
         self._change_state(AstronautState.INTEGRATING)
@@ -264,25 +271,20 @@ class Astronaut(pygame.sprite.Sprite):
     def _load_and_build_frames() -> tuple:
         """
         Charge et découpe la feuille de sprites (sprite sheet) pour un astronaute.
-        :return: un tuple contenant dans l'ordre:
-                 - une liste de trames (image, masque) pour attendre
-                 - une liste de trames (image, masque) pour envoyer la main
-                 - une liste de trames (image, masque) pour se déplacer vers la gauche
-                 - une liste de trames (image, masque) pour se déplacer vers la droite
+        :return: un tuple contenant les trames pour chaque état de l'astronaute
         """
-
         nb_images = Astronaut._NB_WAITING_IMAGES + Astronaut._NB_WAVING_IMAGES + Astronaut._NB_JUMPING_IMAGES
         sprite_sheet = pygame.image.load(Astronaut._ASTRONAUT_FILENAME).convert_alpha()
         sheet_width = sprite_sheet.get_width()
         sheet_height = sprite_sheet.get_height()
-        image_size = (sheet_width / nb_images, sheet_height)  # astronaute qui attend
+        image_size = (sheet_width / nb_images, sheet_height)
 
+        # astronaute qui attend
         waiting_surface = pygame.Surface(image_size, flags=pygame.SRCALPHA)
         source_rect = waiting_surface.get_rect()
         waiting_surface.blit(sprite_sheet, (0, 0), source_rect)
         waiting_mask = pygame.mask.from_surface(waiting_surface)
-        waiting_frames = [
-            (waiting_surface, waiting_mask)]  # astronaute qui envoie la main (les _NB_WAVING_IMAGES prochaines images)
+        waiting_frames = [(waiting_surface, waiting_mask)]
 
         # astronaute qui s'intègre et se désintègre
         integrating_frames = []
@@ -307,7 +309,7 @@ class Astronaut(pygame.sprite.Sprite):
             integrating_frames.append((surface, mask))
         disintegrating_frames = list(reversed(integrating_frames))
 
-        # astronaute qui envoie la main (les _NB_WAVING_IMAGES prochaines images)
+        # astronaute qui envoie la main
         waving_frames = []
         first_frame = Astronaut._NB_WAITING_IMAGES
         for frame in range(first_frame, first_frame + Astronaut._NB_WAVING_IMAGES):
@@ -321,7 +323,7 @@ class Astronaut(pygame.sprite.Sprite):
         waving_frames.extend(waving_frames[2:] + waving_frames[-2::-1])
         waving_frames.extend(waving_frames[0:1])
 
-        # astronaute qui se déplace en sautant (les _NB_JUMPING_IMAGES prochaines images)
+        # astronaute qui se déplace en sautant
         jumping_left_frames = []
         jumping_right_frames = []
         first_frame = Astronaut._NB_WAITING_IMAGES + Astronaut._NB_WAVING_IMAGES
@@ -337,14 +339,8 @@ class Astronaut(pygame.sprite.Sprite):
             flipped_mask = pygame.mask.from_surface(flipped_surface)
             jumping_left_frames.append((flipped_surface, flipped_mask))
 
-        return {
-            AstronautState.WAITING: waiting_frames,
-            AstronautState.INTEGRATING: integrating_frames,
-            AstronautState.DISINTEGRATING: disintegrating_frames,
-            AstronautState.WAVING: waving_frames,
-            AstronautState.JUMPING_LEFT: jumping_left_frames,
-            AstronautState.JUMPING_RIGHT: jumping_right_frames
-        }
+        return  waiting_frames, integrating_frames, disintegrating_frames, waving_frames, jumping_left_frames, jumping_right_frames
+
 
     @staticmethod
     def _load_clips() -> tuple:
@@ -355,18 +351,18 @@ class Astronaut(pygame.sprite.Sprite):
                  - une liste de clips (pygame.mixer.Sound) "Pad # please" ou "Up please"
                  - une liste de clips (pygame.mixer.Sound) "Hey!"
         """
-       
+
         try:
             hey_taxis = [pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_HEY_TAXI][0]),
-                     pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_HEY_TAXI][1]),
-                     pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_HEY_TAXI][2])]
+                         pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_HEY_TAXI][1]),
+                         pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_HEY_TAXI][2])]
 
             pad_pleases = [pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][0]),
-                        pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][1]),
-                        pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][2]),
-                        pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][3]),
-                        pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][4]),
-                        pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][5])]
+                           pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][1]),
+                           pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][2]),
+                           pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][3]),
+                           pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][4]),
+                           pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_PAD][5])]
 
             heys = [pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.VOICES_ASTRONAUT_HEY])]
 
@@ -379,4 +375,3 @@ class Astronaut(pygame.sprite.Sprite):
             fatal_error_app.run(filename)
 
             return [], [], []
-
