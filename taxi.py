@@ -139,7 +139,7 @@ class Taxi(pygame.sprite.Sprite):
             if pygame.sprite.collide_mask(self, astronaut):
                 if self._has_unboarded:
                     astronaut._state = AstronautState.REACHED_DESTINATION
-                    hitting_fines = self._hud.last_saved_money / 2
+                    hitting_fines = self._hud._last_saved_money / 2
                     self._hud._bank_money -= hitting_fines
                     self._hud._bank_money_surface = self._hud._render_bank_money_surface()
                     self._hud._last_saved_money = 0.0
