@@ -87,6 +87,8 @@ class Astronaut(pygame.sprite.Sprite):
 
         self._waving_delay = 0  # temps avant d'envoyer la main (0 initialement, aléatoire ensuite)
 
+        self._is_unboarded = False
+
         self._hud = HUD()
 
     @property
@@ -148,7 +150,7 @@ class Astronaut(pygame.sprite.Sprite):
         self._frames = self._all_frames[self._state]
         self._current_frame = 0
 
-    def move(self, x: int, y: int) -> None:
+    def _move(self, x: int, y: int) -> None:
         """
         Place l'astronaute à la position (x,y) à l'écran.
         :param x: position horizontale
@@ -157,7 +159,11 @@ class Astronaut(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
-        self._pos_x = float(self.rect.x)
+
+    def unboard(self, x: int, y: int):
+        self._change_state(AstronautState.INTEGRATING)
+        self._move(x, y)
+        self._is_unboarded = True
 
     def set_trip_money(self, trip_money: float) -> None:
         self._trip_money = trip_money
@@ -194,7 +200,11 @@ class Astronaut(pygame.sprite.Sprite):
 
         if self._state == AstronautState.INTEGRATING:
             if self._is_state_finished():
-                self._change_state(AstronautState.WAITING)
+                if self._is_unboarded:
+                    self._pos_x = float(self.rect.x)
+                    self.jump(self.target_pad.astronaut_end.x)
+                else:
+                    self._change_state(AstronautState.WAITING)
         elif self._state == AstronautState.DISINTEGRATING:
             if self._is_state_finished():
                 if self._target_pad is not Pad.UP and self._target_x == self._target_pad.astronaut_end.x:
