@@ -69,7 +69,7 @@ class Taxi(pygame.sprite.Sprite):
         self._reactor_sound.play(-1)
 
         self._crash_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_CRASH])
-
+        self._has_unboarded = False
         self._surfaces, self._masks = Taxi._load_and_build_surfaces()
 
         self._reinitialize()
@@ -137,12 +137,13 @@ class Taxi(pygame.sprite.Sprite):
 
         if self.rect.colliderect(astronaut.rect):
             if pygame.sprite.collide_mask(self, astronaut):
-                if self._hud.last_saved_money != 0.0:
+                if self._has_unboarded:
                     astronaut._state = AstronautState.REACHED_DESTINATION
                     hitting_fines = self._hud.last_saved_money / 2
                     self._hud._bank_money -= hitting_fines
                     self._hud._bank_money_surface = self._hud._render_bank_money_surface()
                     self._hud._last_saved_money = 0.0
+                    self._has_unboarded = False
                     return False
                 return True
         return False
@@ -223,6 +224,7 @@ class Taxi(pygame.sprite.Sprite):
         self._hud.add_bank_money(self._astronaut.get_trip_money())
         self._astronaut.set_trip_money(0.0)
         self._hud.set_trip_money(0.0)
+        self._has_unboarded = True
         self._astronaut = None
 
     def update(self, *args, **kwargs) -> None:
