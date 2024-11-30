@@ -19,7 +19,8 @@ class AstronautState(Enum):
     JUMPING_LEFT = auto()
     ONBOARD = auto()
     REACHED_DESTINATION = auto()
-    INTEGRATION = auto()
+    INTEGRATING = auto()
+    DISINTEGRATING = auto()
 
 
 class Astronaut(pygame.sprite.Sprite):
@@ -38,7 +39,8 @@ class Astronaut(pygame.sprite.Sprite):
 
     # temps d'affichage pour les trames de chaque état affiché/animé
     _FRAME_TIMES = { AstronautState.WAITING : 0.1,
-                     AstronautState.INTEGRATION: 0.1,
+                     AstronautState.INTEGRATING: 0.1,
+                     AstronautState.DISINTEGRATING: 0.1,
                      AstronautState.WAVING : 0.1,
                      AstronautState.JUMPING_LEFT : 0.15,
                      AstronautState.JUMPING_RIGHT : 0.15}
@@ -68,7 +70,13 @@ class Astronaut(pygame.sprite.Sprite):
 
         self._all_frames = Astronaut._cached_frames
 
-        self.image, self.mask = self._all_frames[AstronautState.WAITING][0]
+        self._state = AstronautState.INTEGRATING
+        self._frames = self._all_frames[self._state]
+        self._state_time = 0  # temps écoulé dans l'état actuel
+        self._current_frame = 0
+        self._last_frame_time = time.time()
+
+        self.image, self.mask = self._frames[0]
         self.rect = self.image.get_rect()
         self.rect.x = self._source_pad.astronaut_start.x
         self.rect.y = self._source_pad.astronaut_start.y
@@ -78,12 +86,6 @@ class Astronaut(pygame.sprite.Sprite):
         self._velocity = 0.0
 
         self._waving_delay = 0  # temps avant d'envoyer la main (0 initialement, aléatoire ensuite)
-
-        self._state = AstronautState.INTEGRATION
-        self._frames = self._all_frames[self._state]
-        self._state_time = 0  # temps écoulé dans l'état actuel
-        self._current_frame = 0
-        self._last_frame_time = time.time()
 
         self._hud = HUD()
 
@@ -190,32 +192,11 @@ class Astronaut(pygame.sprite.Sprite):
         # ÉTAPE 3 - changer d'état si le moment est venu
         self._state_time += current_time - self._last_frame_time
 
-        if self._state == AstronautState.INTEGRATION:
-            last_frame = self._current_frame == len(self._frames) - 1
-            spent_state_time = self._state_time >= self._FRAME_TIMES[AstronautState.INTEGRATION] * len(self._frames)
-            if last_frame and spent_state_time:
-                self._state = AstronautState.WAITING
-                self._state_time = 0
-                self._frames = self._all_frames[AstronautState.WAITING]
-                self._current_frame = 0
-        elif self._state == AstronautState.WAITING:
-            if self._state_time >= self._waving_delay:
-                self._call_taxi()
-                self._state = AstronautState.WAVING
-                self._state_time = 0
-                self._frames = self._all_frames[AstronautState.WAVING]
-                self._current_frame = 0
-        elif self._state == AstronautState.WAVING:
-            last_frame = self._current_frame == len(self._frames) - 1
-            spent_state_time = self._state_time >= self._FRAME_TIMES[AstronautState.WAVING] * len(self._frames)
-            if last_frame and spent_state_time:
-                self._state = AstronautState.WAITING
-                self._state_time = 0
-                self._frames = self._all_frames[AstronautState.WAITING]
-                self._current_frame = 0
-                self._waving_delay = random.uniform(*Astronaut._WAVING_DELAYS)
-        elif self._state in (AstronautState.JUMPING_RIGHT, AstronautState.JUMPING_LEFT):
-            if self.rect.x == self._target_x:
+        if self._state == AstronautState.INTEGRATING:
+            if self._is_state_finished():
+                self._change_state(AstronautState.WAITING)
+        elif self._state == AstronautState.DISINTEGRATING:
+            if self._is_state_finished():
                 if self._target_pad is not Pad.UP and self._target_x == self._target_pad.astronaut_end.x:
                     self._state = AstronautState.REACHED_DESTINATION
                 else:
@@ -226,13 +207,32 @@ class Astronaut(pygame.sprite.Sprite):
                     else:
                         self._pad_please_clips[self._target_pad.number].play()
                         self._hud.set_current_pad(str(self._target_pad.number))
-
-                return
-
+        elif self._state == AstronautState.WAITING:
+            if self._state_time >= self._waving_delay:
+                self._call_taxi()
+                self._change_state(AstronautState.WAVING)
+        elif self._state == AstronautState.WAVING:
+            if self._is_state_finished():
+                self._change_state(AstronautState.WAITING)
+                self._waving_delay = random.uniform(*Astronaut._WAVING_DELAYS)
+        elif self._state in (AstronautState.JUMPING_RIGHT, AstronautState.JUMPING_LEFT):
+            if self.rect.x == self._target_x:
+                self._change_state(AstronautState.DISINTEGRATING)
             self._pos_x += self._velocity
             self.rect.x = round(self._pos_x)
 
         self.image, self.mask = self._frames[self._current_frame]
+
+    def _is_state_finished(self) -> bool:
+        last_frame = self._current_frame == len(self._frames) - 1
+        spent_state_time = self._state_time >= self._FRAME_TIMES[self._state] * len(self._frames)
+        return last_frame and spent_state_time
+
+    def _change_state(self, state: AstronautState) -> None:
+        self._state = state
+        self._frames = self._all_frames[state]
+        self._current_frame = 0
+        self._state_time = 0
 
     def wait(self) -> None:
         """ Replace l'astronaute dans l'état d'attente. """
@@ -266,8 +266,8 @@ class Astronaut(pygame.sprite.Sprite):
         waiting_mask = pygame.mask.from_surface(waiting_surface)
         waiting_frames = [(waiting_surface, waiting_mask)]
 
-        # astronaute qui s'intègre
-        integration_frames = []
+        # astronaute qui s'intègre et se désintègre
+        integrating_frames = []
         for frame in range(Astronaut._NB_INTEGRATION_IMAGES):
             surface = pygame.Surface(image_size, flags=pygame.SRCALPHA)
             source_rect = surface.get_rect()
@@ -282,11 +282,12 @@ class Astronaut(pygame.sprite.Sprite):
                 for y in range(surface_height):
                     if y < reversed_surface_part:
                         r, g, b, a = surface.get_at((x, y))
-                        erase_pixel = randint(0, 2) > 0
+                        erase_pixel = randint(0, 10) > 0
                         if erase_pixel:
                             surface.set_at((x, y), (r, g, b, 0))
             surface.unlock()
-            integration_frames.append((surface, mask))
+            integrating_frames.append((surface, mask))
+        disintegrating_frames = list(reversed(integrating_frames))
 
         # astronaute qui envoie la main (les _NB_WAVING_IMAGES prochaines images)
         waving_frames = []
@@ -320,7 +321,8 @@ class Astronaut(pygame.sprite.Sprite):
 
         return {
             AstronautState.WAITING: waiting_frames,
-            AstronautState.INTEGRATION: integration_frames,
+            AstronautState.INTEGRATING: integrating_frames,
+            AstronautState.DISINTEGRATING: disintegrating_frames,
             AstronautState.WAVING: waving_frames,
             AstronautState.JUMPING_LEFT: jumping_left_frames,
             AstronautState.JUMPING_RIGHT: jumping_right_frames

@@ -241,6 +241,6 @@ class LevelScene(Scene):
         if astronaut_inside_taxi:
             self._astronaut.set_trip_money(0.0)
 
-    def game_over_validation(self) -> bool:
+    def game_over_validation(self):
         if self._hud.get_lives() <= 0: #Condition pour voir si le joueur n'a pas de vie
             SceneManager().change_scene("game_over", LevelScene._FADE_OUT_DURATION) #Si le joueur n'a pas de vie, alors ca change le scène à game_over
