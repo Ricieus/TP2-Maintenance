@@ -8,6 +8,8 @@ class Files(Enum):
     VOICES_ASTRONAUT_HEY_TAXI = auto()
     VOICES_ASTRONAUT_PAD = auto()
     VOICES_ASTRONAUT_HEY = auto()
+    IMG_FUEL_GAUGE_FULL = auto()
+    IMG_FUEL_GAUGE_EMPTY = auto()
     IMG_ICON_LIVES = auto()
     IMG_LOADING = auto()
     SND_MUSIC_LOADING = auto()
@@ -66,6 +68,8 @@ class GameSettings:
             "img/obstacle01.png",
             "img/obstacle02.png",
         ],
+        Files.IMG_FUEL_GAUGE_FULL: "img/fuel_gauge_full.png",
+        Files.IMG_FUEL_GAUGE_EMPTY: "img/fuel_gauge_empty.png",
         Files.IMG_PUMP: "img/pump.png",
         Files.IMG_PADS: [
             "img/pad01.png",

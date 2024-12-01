@@ -72,6 +72,9 @@ class Taxi(pygame.sprite.Sprite):
         self._has_unboarded = False
         self._surfaces, self._masks = Taxi._load_and_build_surfaces()
 
+        self._fuel_status = 100
+        self._fuel_consumption = 0.0
+
         self._reinitialize()
 
     @property
@@ -97,6 +100,8 @@ class Taxi(pygame.sprite.Sprite):
                 self._crash_sound.play()
                 self._velocity = pygame.Vector2(0.0, 0.0)
                 self._acceleration = pygame.Vector2(0.0, Taxi._CRASH_ACCELERATION)
+                self._fuel_status = 100
+                self._hud.set_current_fuel(self._fuel_status)
 
                 return True
 
@@ -285,17 +290,21 @@ class Taxi(pygame.sprite.Sprite):
 
         gear_out = self._flags & Taxi._FLAG_GEAR_OUT == Taxi._FLAG_GEAR_OUT
 
+        self._fuel_consumption = 0.0
+
         if keys[pygame.K_RIGHT] and keys[pygame.K_LEFT] or keys[pygame.K_UP] and keys[pygame.K_DOWN]:
             return
 
         if keys[pygame.K_LEFT] and not gear_out:
             self._flags |= Taxi._FLAG_LEFT | Taxi._FLAG_REAR_REACTOR
             self._acceleration.x = max(self._acceleration.x - Taxi._REAR_REACTOR_POWER, -Taxi._MAX_ACCELERATION_X)
+            self._fuel_consumption += self._acceleration.x
 
         if keys[pygame.K_RIGHT] and not gear_out:
             self._flags &= ~Taxi._FLAG_LEFT
             self._flags |= self._FLAG_REAR_REACTOR
             self._acceleration.x = min(self._acceleration.x + Taxi._REAR_REACTOR_POWER, Taxi._MAX_ACCELERATION_X)
+            self._fuel_consumption += self._acceleration.x
 
         if not (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
             self._flags &= ~Taxi._FLAG_REAR_REACTOR
@@ -305,11 +314,13 @@ class Taxi(pygame.sprite.Sprite):
             self._flags &= ~Taxi._FLAG_BOTTOM_REACTOR
             self._flags |= Taxi._FLAG_TOP_REACTOR
             self._acceleration.y = min(self._acceleration.y + Taxi._TOP_REACTOR_POWER, Taxi._MAX_ACCELERATION_Y_DOWN)
+            self._fuel_consumption += self._acceleration.y
 
         if keys[pygame.K_UP]:
             self._flags &= ~Taxi._FLAG_TOP_REACTOR
             self._flags |= Taxi._FLAG_BOTTOM_REACTOR
             self._acceleration.y = max(self._acceleration.y - Taxi._BOTTOM_REACTOR_POWER, -Taxi._MAX_ACCELERATION_Y_UP)
+            self._fuel_consumption += self._acceleration.y
             if self._pad_landed_on:
                 self._pad_landed_on = None
                 self.hide_gear()
@@ -317,6 +328,27 @@ class Taxi(pygame.sprite.Sprite):
         if not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
             self._flags &= ~(Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_BOTTOM_REACTOR)
             self._acceleration.y = 0.0
+
+        if any(keys) and self._flags != self._FLAG_DESTROYED:
+            self._fuel_status -= abs(self._fuel_consumption)
+        else:
+            self._fuel_consumption = 0.0
+
+        if self._fuel_status < 0:
+            self._flags = self._FLAG_DESTROYED
+            self._crash_sound.play()
+            self._velocity_x = 0.0
+            self._velocity_y = 0.0
+            self._acceleration_x = 0.0
+            self._acceleration_y = Taxi._CRASH_ACCELERATION
+        self._hud.set_current_fuel(self._fuel_status)
+
+    def is_refueling(self):
+        if self._fuel_status < 100:
+            self._fuel_status += 0.05
+        else:
+            self._fuel_status = 100
+        self._hud.set_current_fuel(self._fuel_status)
 
     def hide_gear(self) -> None:
         """ Pour faire  rentrer le train d’atterrissage au décollage d’une plateforme. """
@@ -352,6 +384,7 @@ class Taxi(pygame.sprite.Sprite):
         if self._flags & Taxi._FLAG_DESTROYED:
             self.image = self._surfaces[ImgSelector.DESTROYED][facing]
             self.mask = self._masks[ImgSelector.DESTROYED][facing]
+            self._fuel_status = 100
             return
 
         condition_flags = Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_REAR_REACTOR
@@ -390,11 +423,6 @@ class Taxi(pygame.sprite.Sprite):
         if self._flags & Taxi._FLAG_GEAR_OUT:
             self.image = self._surfaces[ImgSelector.GEAR_OUT][facing]
             self.mask = self._masks[ImgSelector.GEAR_OUT][facing]
-            return
-
-        if self._flags & Taxi._FLAG_DESTROYED:
-            self.image = self._surfaces[ImgSelector.DESTROYED][facing]
-            self.mask = self._masks[ImgSelector.DESTROYED][facing]
             return
 
         self.image = self._surfaces[ImgSelector.IDLE][facing]
@@ -518,7 +546,3 @@ class Taxi(pygame.sprite.Sprite):
         masks[ImgSelector.DESTROYED] = pygame.mask.from_surface(surface), pygame.mask.from_surface(flipped)
 
         return surfaces, masks
-
-    @property
-    def last_saved_money(self):
-        return self._last_saved_money
