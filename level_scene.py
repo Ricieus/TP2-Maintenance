@@ -43,6 +43,11 @@ class LevelScene(Scene):
         self._pads = None
         self._last_taxied_astronaut_time = time.time()
 
+        self._jingle_sound_effect = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_JINGLE])
+        self._is_jingle_sound_on = True
+        self._jingle_begin_time = 0
+        self._is_first_update_valid = False
+
         try:
             config = configparser.ConfigParser()
             config.read(GameSettings.FILE_NAMES[Files.CFG_LEVEL].replace("#", str(self._level)))
@@ -95,18 +100,30 @@ class LevelScene(Scene):
             self._reinitialize()
             self._hud.visible = True
 
+
         except FileNotFoundError as e:
             directory_plus_filename = str(e).split("'")[1]
             filename = directory_plus_filename.split("/")[-1]
             fatal_error_app = FatalError()
             fatal_error_app.run(filename)
 
+    def jingle_sound_play(self):
+        self._is_jingle_sound_on = True
+        self._jingle_begin_time = pygame.time.get_ticks()
+        self._jingle_sound_effect.play()
+        self._last_taxied_astronaut_time += self._jingle_sound_effect.get_length()
+
     def handle_event(self, event: pygame.event.Event) -> None:
         """ Gère les événements PyGame. """
+
+        if self._is_jingle_sound_on:
+            return
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE and self._taxi.is_destroyed():
                 self._taxi.reset()
                 self._retry_current_astronaut()
+                self.jingle_sound_play()
                 return
 
         if self._taxi:
@@ -117,6 +134,18 @@ class LevelScene(Scene):
         Met à jour le niveau de jeu. Cette méthode est appelée à chaque itération de la boucle de jeu.
         :param delta_time: temps écoulé (en secondes) depuis la dernière trame affichée
         """
+        if not self._is_first_update_valid: #Condition pour voir si le update est fais une fois
+            self.jingle_sound_play()
+
+            self._is_first_update_valid = True
+            return
+
+        if self._is_jingle_sound_on: #Condition pour voir si le jingle sonore est en train jouer
+            jingle_play_duration = (pygame.time.get_ticks() - self._jingle_begin_time) / 1000 #Pour calculer le temps passé du sonore jingle en secondes
+            if jingle_play_duration > self._jingle_sound_effect.get_length(): #Condition pour comparer le temps avec la longueur du jingle
+                self._is_jingle_sound_on = False
+            return
+
         # Initialisation de la musique si ce n'est pas déjà fait
         if not self._music_started:
             self._music.play(-1)

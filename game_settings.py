@@ -25,6 +25,7 @@ class Files(Enum):
     SND_REACTOR = auto()
     SND_CRASH = auto()
     CFG_LEVEL = auto()
+    SND_JINGLE = auto()
 
 
 class GameSettings:
@@ -82,7 +83,8 @@ class GameSettings:
         Files.SND_SPLASH: "snd/371516__mrthenoronha__space-game-theme-loop.wav",
         Files.IMG_TAXIS: "img/taxis.png",
         Files.SND_REACTOR: "snd/170278__knova__jetpack-low.wav",
-        Files.SND_CRASH: "snd/237375__squareal__car-crash.wav"
+        Files.SND_CRASH: "snd/237375__squareal__car-crash.wav",
+        Files.SND_JINGLE: "snd/jingle.mp3"
     }
 
     _instance = None
