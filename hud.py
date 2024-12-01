@@ -9,6 +9,8 @@ class HUD:
     """ Singleton pour l'affichage tête haute (HUD). """
 
     _LIVES_ICONS_FILENAME = GameSettings.FILE_NAMES[Files.IMG_ICON_LIVES]
+    _FUEL_GAUGE_FULL = GameSettings.FILE_NAMES[Files.IMG_FUEL_GAUGE_FULL]
+    _FUEL_GAUGE_EMPTY = GameSettings.FILE_NAMES[Files.IMG_FUEL_GAUGE_EMPTY]
     _LIVES_ICONS_SPACING = 10
 
     _instance = None
@@ -23,6 +25,7 @@ class HUD:
             self._settings = GameSettings()
 
             self._text_font = pygame.font.Font("fonts/boombox2.ttf", 24)
+            self._fuel_font = pygame.font.Font("fonts/boombox2.ttf", 12)
 
             self._bank_money = 0
             self._bank_money_surface = self._render_bank_money_surface()
@@ -35,6 +38,12 @@ class HUD:
             self._lives = self._settings.NB_PLAYER_LIVES
             self._lives_icon = pygame.image.load(HUD._LIVES_ICONS_FILENAME).convert_alpha()
             self._lives_pos= pygame.Vector2(20, self._settings.SCREEN_HEIGHT - (self._lives_icon.get_height() + 40))
+
+            self._fuel_status = None
+            self._fuel_full_hud = pygame.image.load(HUD._FUEL_GAUGE_FULL).convert_alpha()
+            self._fuel_empty_hud = pygame.image.load(HUD._FUEL_GAUGE_EMPTY).convert_alpha()
+            self._fuel_hud_pos = pygame.Vector2((self._settings.SCREEN_WIDTH - (self._fuel_full_hud.get_width())) / 2, self._settings.SCREEN_HEIGHT - self._fuel_full_hud.get_height())
+            self._fuel_message_pos = pygame.Vector2((self._settings.SCREEN_WIDTH / 2, self._settings.SCREEN_HEIGHT - self._fuel_full_hud.get_height()))
 
             self._current_pad = None
             self._current_pad_surface = None
@@ -62,6 +71,10 @@ class HUD:
             x = (self._settings.SCREEN_WIDTH - self._current_pad_surface.get_width()) / 2
             y = self._settings.SCREEN_HEIGHT / 2
             screen.blit(self._current_pad_surface, (x, y))
+
+        screen.blit(self._fuel_empty_hud, self._fuel_hud_pos)
+        screen.blit(self._fuel_full_hud, self._fuel_hud_pos)
+        screen.blit(self._render_fuel_message_surface(), self._fuel_message_pos)
 
     def add_bank_money(self, amount: float) -> None:
         self._bank_money += round(amount, 2)
@@ -92,6 +105,10 @@ class HUD:
             self._text_thread = threading.Thread(target=self._animate_text)
             self._text_thread.start()
 
+    def set_current_fuel(self, fuel_status: float) -> None:
+        self._fuel_status = fuel_status
+        self._fuel_full_hud = self._render_fuel_hud()
+
     def _render_bank_money_surface(self) -> pygame.Surface:
         money_str = f"{self._bank_money:.2f}"
         return self._text_font.render(f"${money_str: >8}", True, (51, 51, 51))
@@ -103,6 +120,26 @@ class HUD:
     def _render_current_pad_surface(self) -> pygame.Surface:
         message_str = f"PAD {self._current_pad} PLEASE" if self._current_pad != "UP" else f"{self._current_pad} PLEASE"
         return self._text_font.render(f"{message_str}", True, (255, 255, 255))
+
+    def _render_fuel_message_surface(self) -> pygame.Surface:
+        message_str = f"Fuel"
+        return self._fuel_font.render(f"{message_str}", True, (255, 255, 255))
+
+    def _render_fuel_hud(self) -> pygame.Surface:
+        fuel_used = self._fuel_status / 100
+        visible_width = int(self._fuel_full_hud.get_width() * fuel_used)
+
+        self._fuel_full_hud.lock()
+        for x in range(self._fuel_full_hud.get_width()):
+            for y in range(self._fuel_full_hud.get_height()):
+                r, g, b, a = self._fuel_full_hud.get_at((x, y))
+                if x > visible_width or (r, g, b) == (0, 0, 0):
+                    self._fuel_full_hud.set_at((x, y), (r, g, b, 0))
+                elif x < visible_width:
+                    self._fuel_full_hud.set_at((x, y), (r, g, b, 255))
+        self._fuel_full_hud.unlock()
+
+        return self._fuel_full_hud
 
     def _animate_text(self) -> None:
         for alpha in range(0, 256, 10):

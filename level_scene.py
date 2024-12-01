@@ -193,7 +193,7 @@ class LevelScene(Scene):
                 self.reset_money_after_crash()
                 self._hud.loose_live()
             elif self._taxi.refuel_from(pump):
-                pass  # Effets secondaires de remplissage de réservoir ici
+                self._taxi.is_refueling()
 
         self.game_over_validation()
 
