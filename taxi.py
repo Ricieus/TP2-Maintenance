@@ -364,10 +364,8 @@ class Taxi(pygame.sprite.Sprite):
         if self._fuel_status < 0:
             self._flags = self._FLAG_DESTROYED
             self._crash_sound.play()
-            self._velocity_x = 0.0
-            self._velocity_y = 0.0
-            self._acceleration_x = 0.0
-            self._acceleration_y = Taxi._CRASH_ACCELERATION
+            self._velocity = pygame.Vector2(0.0, 0.0)
+            self._acceleration = pygame.Vector2(0.0, Taxi._CRASH_ACCELERATION)
         self._hud.set_current_fuel(self._fuel_status)
 
     def is_refueling(self):
