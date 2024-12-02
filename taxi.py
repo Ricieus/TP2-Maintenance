@@ -1,6 +1,8 @@
+import time
 from enum import Enum, auto
 
 import pygame
+from pygame import Vector2
 
 from game_settings import GameSettings, Files
 from astronaut import Astronaut, AstronautState
@@ -30,6 +32,9 @@ class Taxi(pygame.sprite.Sprite):
     _TAXIS_FILENAME = GameSettings.FILE_NAMES[Files.IMG_TAXIS]
     _NB_TAXI_IMAGES = 6
 
+    _NB_SLIDE_FRAMES = 3
+    _SLIDE_FRAME_TIME = 0.5
+
     _FLAG_LEFT = 1 << 0  # indique si le taxi va vers la gauche
     _FLAG_TOP_REACTOR = 1 << 1  # indique si le réacteur du dessus est allumé
     _FLAG_BOTTOM_REACTOR = 1 << 2  # indique si le réacteur du dessous est allumé
@@ -48,6 +53,8 @@ class Taxi(pygame.sprite.Sprite):
     _MAX_ACCELERATION_Y_DOWN = 0.05
 
     _MAX_VELOCITY_SMOOTH_LANDING = 0.50  # vitesse maximale permise pour un atterrissage en douceur
+    _MIN_VELOCITY_SLIDE = 1 # vitesse minimale pour permettre le glissage du taxi
+    _SLIDE_POWER = 4
     _CRASH_ACCELERATION = 0.10
 
     _FRICTION_MUL = 0.9995  # la vitesse horizontale est multipliée par la friction
@@ -206,6 +213,15 @@ class Taxi(pygame.sprite.Sprite):
             self.rect.bottom = pad.rect.top + 4
             self._position.y = float(self.rect.y)
             self._flags &= Taxi._FLAG_LEFT | Taxi._FLAG_GEAR_OUT
+            if self._velocity.x > self._MIN_VELOCITY_SLIDE or self._velocity.x < -self._MIN_VELOCITY_SLIDE:
+                self._sliding = True
+                self._last_frame_time = time.time()
+                self._top_slide_length = self._velocity.x * self._SLIDE_POWER
+                if self._top_slide_length > self._max_slide_length:
+                    self._top_slide_length = self._max_slide_length
+                elif self._top_slide_length < -self._max_slide_length:
+                    self._top_slide_length = -self._max_slide_length
+                print(self._top_slide_length)
             self._velocity = pygame.Vector2(0.0, 0.0)
             self._acceleration = pygame.Vector2(0.0, 0.0)
             self._pad_landed_on = pad
@@ -255,8 +271,23 @@ class Taxi(pygame.sprite.Sprite):
         # ÉTAPE 1 - gérer les touches présentement enfoncées
         self._handle_keys()
 
-        # ÉTAPE 2 - calculer la nouvelle position du taxi
+        # ÉTAPE 2 - gérer le taxi qui glisse
+        current_time = time.time()
+        self._accumulated_frame_time += current_time - self._last_frame_time
+        if self._sliding and self._accumulated_frame_time > self._SLIDE_FRAME_TIME:
+            self._accumulated_frame_time = 0
+            if self._current_slide_frame < self._NB_SLIDE_FRAMES:
+                self._slide_length_per_images = self._top_slide_length // (
+                        self._NB_SLIDE_FRAMES - self._current_slide_frame)
+                self._position.x += self._slide_length_per_images
+                self._top_slide_length -= self._slide_length_per_images
+                self._current_slide_frame += 1
+            else:
+                self._sliding = False
+                self._current_slide_frame = 0
+                self._top_slide_length = 0
 
+        # ÉTAPE 3 - calculer la nouvelle position du taxi
         self._velocity += self._acceleration
         self._velocity.x *= Taxi._FRICTION_MUL
         if self._pad_landed_on is None:
@@ -271,14 +302,14 @@ class Taxi(pygame.sprite.Sprite):
             self._reactor_sound.set_volume(0)
             return
 
-        # ÉTAPE 3 - fait entendre les réacteurs ou pas
+        # ÉTAPE 4 - fait entendre les réacteurs ou pas
         reactor_flags = Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_REAR_REACTOR | Taxi._FLAG_BOTTOM_REACTOR
         if self._flags & reactor_flags:
             self._reactor_sound.set_volume(Taxi._REACTOR_SOUND_VOLUME)
         else:
             self._reactor_sound.set_volume(0)
 
-        # ÉTAPE 4 - sélectionner la bonne image en fonction de l'état du taxi
+        # ÉTAPE 5 - sélectionner la bonne image en fonction de l'état du taxi
         self._select_image()
 
     def _handle_keys(self) -> None:
@@ -370,6 +401,14 @@ class Taxi(pygame.sprite.Sprite):
         self._position = pygame.Vector2(self.rect.x, self.rect.y)
         self._velocity = pygame.Vector2(0.0, 0.0)
         self._acceleration = pygame.Vector2(0.0, 0.0)
+
+        self._current_slide_frame = 0
+        self._last_frame_time = 0
+        self._accumulated_frame_time = 0
+        self._max_slide_length = self.rect.width / 2
+        self._slide_length_per_images = 0
+        self._top_slide_length = 0
+        self._sliding = False
 
         self._pad_landed_on = None
         self._taking_off = False
