@@ -37,7 +37,7 @@ class HUD:
 
             self._lives = self._settings.NB_PLAYER_LIVES
             self._lives_icon = pygame.image.load(HUD._LIVES_ICONS_FILENAME).convert_alpha()
-            self._lives_pos= pygame.Vector2(20, self._settings.SCREEN_HEIGHT - (self._lives_icon.get_height() + 40))
+            self._lives_pos = pygame.Vector2(20, self._settings.SCREEN_HEIGHT - (self._lives_icon.get_height() + 40))
 
             self._fuel_status = None
             self._fuel_full_hud = pygame.image.load(HUD._FUEL_GAUGE_FULL).convert_alpha()
@@ -80,6 +80,15 @@ class HUD:
         self._bank_money += round(amount, 2)
         self._last_saved_money = amount
         self._bank_money_surface = self._render_bank_money_surface()
+
+    @staticmethod
+    def calculate_trip_cost(distance: float) -> float:
+        """
+        Calcule le coût initial d'une course en fonction de la distance.
+        """
+        cost_per_km = 0.5  # Coût par kilomètre en dollars
+        trip_cost = (distance * cost_per_km)
+        return round(trip_cost, 2)
 
     def get_lives(self) -> int:
         return self._lives

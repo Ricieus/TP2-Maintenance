@@ -69,6 +69,9 @@ class Taxi(pygame.sprite.Sprite):
         self._reactor_sound.play(-1)
 
         self._crash_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_CRASH])
+
+        self._smooth_landing = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SMOOTH_LANDING])
+        self._rough_landing_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.ROUGH_LANDING])
         self._has_unboarded = False
         self._surfaces, self._masks = Taxi._load_and_build_surfaces()
 
@@ -140,6 +143,7 @@ class Taxi(pygame.sprite.Sprite):
 
         if self.rect.colliderect(astronaut.rect):
             if pygame.sprite.collide_mask(self, astronaut):
+                astronaut.play_destination_clip()
                 if self._has_unboarded:
                     astronaut._state = AstronautState.REACHED_DESTINATION
                     hitting_fines = self._hud._last_saved_money / 2
@@ -169,17 +173,58 @@ class Taxi(pygame.sprite.Sprite):
         if not gear_out:
             return False
 
-        if self._velocity.y > Taxi._MAX_VELOCITY_SMOOTH_LANDING or self._velocity.y < 0.0:#self._acceleration_y < 0.0:
+        if self._velocity.y > Taxi._MAX_VELOCITY_SMOOTH_LANDING or self._velocity.y < 0.0:
             return False
 
         if not self.rect.colliderect(pad.rect):
             return False
 
-        taxi_edges_position = (self.rect.left, self.rect.right) #tuple qui prend le position gauche et droite de taxi
+        taxi_edges_position = (self.rect.left, self.rect.right)
 
         visible_platform = 0
         invisible_left_image = 0
         invisible_right_image = 0
+
+        pad.image.lock()
+        for x in range(pad.image.get_width()):  # TODO: à refactoriser
+            r, g, b, a = pad.image.get_at((x, 0))
+            if a != 0:
+                visible_platform += 1
+            elif a == 0 and visible_platform == 0:
+                invisible_left_image += 1
+            elif a == 0:
+                invisible_right_image += 1
+        pad.image.unlock()
+
+        platform_edges_position = (pad.rect.left + invisible_left_image, pad.rect.right - invisible_right_image)
+
+        if taxi_edges_position[0] < platform_edges_position[0] or taxi_edges_position[1] > platform_edges_position[1]:
+            self._flags = self._FLAG_DESTROYED
+            self._crash_sound.play()
+            self._velocity = pygame.Vector2(0.0, 0.0)
+            self._acceleration = pygame.Vector2(0.0, Taxi._CRASH_ACCELERATION)
+            return False
+
+        if pygame.sprite.collide_mask(self, pad):
+            self.rect.bottom = pad.rect.top + 4
+            self._position.y = float(self.rect.y)
+            self._flags &= Taxi._FLAG_LEFT | Taxi._FLAG_GEAR_OUT
+            self._velocity = pygame.Vector2(0.0, 0.0)
+            self._acceleration = pygame.Vector2(0.0, 0.0)
+            self._pad_landed_on = pad
+
+            if Taxi._MAX_VELOCITY_SMOOTH_LANDING >= self._velocity.y >= 0.0:
+                self._smooth_landing.play()
+
+            elif self._velocity.y > Taxi._MAX_VELOCITY_SMOOTH_LANDING:
+                self._rough_landing_sound.play()
+
+            if self._astronaut:
+                if self._astronaut.target_pad and self._astronaut.target_pad.number == pad.number:
+                    self.unboard_astronaut()
+            return True
+
+        return False
 
         pad.image.lock()
         for x in range(pad.image.get_width()): #TODO: à refactoriser
@@ -239,9 +284,17 @@ class Taxi(pygame.sprite.Sprite):
         if self._astronaut.target_pad is not Pad.UP:
             self._astronaut.unboard(self.rect.x + 20, self._pad_landed_on.rect.y - self._astronaut.rect.height)
 
-        self._hud.add_bank_money(self._astronaut.get_trip_money())
+        # Calcul de la distance entre le taxi et la plateforme de destination
+        distance = abs(self.rect.x - self._pad_landed_on.rect.x)
+
+        # Calcul du coût de la course basé sur la distance
+        trip_cost = self._hud.calculate_trip_cost(distance)  # Implémenter cette méthode pour calculer le coût
+
+        self._hud.add_bank_money(trip_cost)
+
         self._astronaut.set_trip_money(0.0)
         self._hud.set_trip_money(0.0)
+
         self._has_unboarded = True
         self._astronaut = None
 

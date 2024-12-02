@@ -267,6 +267,16 @@ class Astronaut(pygame.sprite.Sprite):
             clip = random.choice(self._hey_taxi_clips)
             clip.play()
 
+            self.play_destination_clip()
+
+    def play_destination_clip(self) -> None:
+        if self._state == AstronautState.ONBOARD:
+            clip_index = min(self._target_pad.number, len(self._pad_please_clips) - 1)
+            self._pad_please_clips[clip_index].play()
+        else:
+            if self._hey_clips:
+                random.choice(self._hey_clips).play()
+
     @staticmethod
     def _load_and_build_frames() -> tuple:
         """
