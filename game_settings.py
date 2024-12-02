@@ -26,10 +26,12 @@ class Files(Enum):
     SND_CRASH = auto()
     CFG_LEVEL = auto()
     SND_JINGLE = auto()
+    ROUGH_LANDING = auto()
+    SMOOTH_LANDING = auto()
 
 
 class GameSettings:
-    """ Singleton pour les paramètres de jeu. """
+    """ Singleton pour les paramÃ¨tres de jeu. """
 
     SCREEN_WIDTH = 1280
     SCREEN_HEIGHT = 720
@@ -84,7 +86,9 @@ class GameSettings:
         Files.IMG_TAXIS: "img/taxis.png",
         Files.SND_REACTOR: "snd/170278__knova__jetpack-low.wav",
         Files.SND_CRASH: "snd/237375__squareal__car-crash.wav",
-        Files.SND_JINGLE: "snd/jingle.mp3"
+        Files.SND_JINGLE: "snd/jingle.mp3",
+        Files.ROUGH_LANDING: "snd/land2-43790.mp3",
+        Files.SMOOTH_LANDING: "snd/rocket-landing-38715.mp3"
     }
 
     _instance = None

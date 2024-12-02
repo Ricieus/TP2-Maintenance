@@ -4,6 +4,7 @@ import pygame
 import time
 import configparser
 
+import pad
 from astronaut import Astronaut
 from game_settings import GameSettings, Files
 from fatal_error import FatalError
@@ -70,11 +71,14 @@ class LevelScene(Scene):
 
             self._gate = pygame.image.load(gate_data[0].strip()).convert_alpha()
 
+
             # Extraction des coordonnées (x, y)
             x, y = map(int, gate_data[1:])
             self._gate_position = (x, y)
 
             self._gate = Gate(gate_data[0].strip(), (x, y))
+
+
 
             self._obstacles = []
             for key in config["obstacles"]:
@@ -96,7 +100,7 @@ class LevelScene(Scene):
                 self._pads.append(Pad(int(key[3:]), img_path, (int(x), int(y)), int(width), int(height)))
             self._pad_sprites = pygame.sprite.Group()
             self._pad_sprites.add(self._pads)
-
+            pad.initialize_pad_up(self._gate)
             self._reinitialize()
             self._hud.visible = True
 
@@ -254,12 +258,12 @@ class LevelScene(Scene):
     def _retry_current_astronaut(self) -> None:
         """ Replace le niveau dans l'état où il était avant la course actuelle. """
         self._gate.close()
-        self._astronauts = [Astronaut(self._pads[3], self._pads[0], 20.00),
-                            Astronaut(self._pads[2], self._pads[4], 20.00),
-                            Astronaut(self._pads[0], self._pads[1], 20.00),
-                            Astronaut(self._pads[4], self._pads[2], 20.00),
-                            Astronaut(self._pads[1], self._pads[3], 20.00),
-                            Astronaut(self._pads[0], Pad.UP, 20.00)]
+        self._astronauts = [Astronaut(self._pads[3], self._pads[0]),
+                            Astronaut(self._pads[2], self._pads[4]),
+                            Astronaut(self._pads[0], self._pads[1]),
+                            Astronaut(self._pads[4], self._pads[2]),
+                            Astronaut(self._pads[1], self._pads[3]),
+                            Astronaut(self._pads[0], Pad.UP)]
         self._last_taxied_astronaut_time = time.time()
         self._astronaut = None
 

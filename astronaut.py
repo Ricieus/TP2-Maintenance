@@ -1,3 +1,5 @@
+from math import sqrt
+
 import pygame
 import random
 import time
@@ -36,6 +38,7 @@ class Astronaut(pygame.sprite.Sprite):
     _LOOSE_ONE_CENT_EVERY = 0.05  # perd 1 cent tous les 5 centièmes de seconde
     _ONE_CENT = 0.01
     _WAVING_DELAYS = 10.0, 30.0
+    _TARIFF_PER_UNIT_DISTANCE = 0.25
 
     # temps d'affichage pour les trames de chaque état affiché/animé
     _FRAME_TIMES = {AstronautState.WAITING: 0.1,
@@ -47,19 +50,21 @@ class Astronaut(pygame.sprite.Sprite):
 
     _cached_frames = None
 
-    def __init__(self, source_pad: Pad, target_pad: Pad, trip_money: float) -> None:
+    def __init__(self, source_pad: Pad, target_pad: Pad) -> None:
         """
         Initialise une instance d'astronaute.
         :param source_pad: le pad sur lequel apparaîtra l'astronaute
         :param target_pad: le pad où souhaite se rendre l'astronaute
-        :param trip_money: le montant de départ pour la course (diminue avec le temps)
         """
         super(Astronaut, self).__init__()
 
         self._source_pad = source_pad
         self._target_pad = target_pad
+        start_x, start_y = self._source_pad.astronaut_start.x, self._source_pad.astronaut_start.y
+        end_x, end_y = self._target_pad.astronaut_end.x, self._target_pad.astronaut_end.y
+        distance = sqrt((end_x - start_x) ** 2 + (end_y - start_y) ** 2)
+        self._trip_money = distance * Astronaut._TARIFF_PER_UNIT_DISTANCE
 
-        self._trip_money = trip_money
         self._time_is_money = 0.0
         self._last_saved_time = None
 
@@ -266,6 +271,16 @@ class Astronaut(pygame.sprite.Sprite):
         if self._state == AstronautState.WAITING:
             clip = random.choice(self._hey_taxi_clips)
             clip.play()
+
+            self.play_destination_clip()
+
+    def play_destination_clip(self) -> None:
+        if self._state == AstronautState.ONBOARD:
+            clip_index = min(self._target_pad.number, len(self._pad_please_clips) - 1)
+            self._pad_please_clips[clip_index].play()
+        else:
+            if self._hey_clips:
+                random.choice(self._hey_clips).play()
 
     @staticmethod
     def _load_and_build_frames() -> tuple:

@@ -37,7 +37,7 @@ class HUD:
 
             self._lives = self._settings.NB_PLAYER_LIVES
             self._lives_icon = pygame.image.load(HUD._LIVES_ICONS_FILENAME).convert_alpha()
-            self._lives_pos= pygame.Vector2(20, self._settings.SCREEN_HEIGHT - (self._lives_icon.get_height() + 40))
+            self._lives_pos = pygame.Vector2(20, self._settings.SCREEN_HEIGHT - (self._lives_icon.get_height() + 40))
 
             self._fuel_status = None
             self._fuel_full_hud = pygame.image.load(HUD._FUEL_GAUGE_FULL).convert_alpha()
