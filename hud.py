@@ -81,15 +81,6 @@ class HUD:
         self._last_saved_money = amount
         self._bank_money_surface = self._render_bank_money_surface()
 
-    @staticmethod
-    def calculate_trip_cost(distance: float) -> float:
-        """
-        Calcule le coût initial d'une course en fonction de la distance.
-        """
-        cost_per_km = 0.5  # Coût par kilomètre en dollars
-        trip_cost = (distance * cost_per_km)
-        return round(trip_cost, 2)
-
     def get_lives(self) -> int:
         return self._lives
 

@@ -284,19 +284,12 @@ class Taxi(pygame.sprite.Sprite):
         if self._astronaut.target_pad is not Pad.UP:
             self._astronaut.unboard(self.rect.x + 20, self._pad_landed_on.rect.y - self._astronaut.rect.height)
 
-        # Calcul de la distance entre le taxi et la plateforme de destination
-        distance = abs(self.rect.x - self._pad_landed_on.rect.x)
-
-        # Calcul du coût de la course basé sur la distance
-        trip_cost = self._hud.calculate_trip_cost(distance)  # Implémenter cette méthode pour calculer le coût
-
-        self._hud.add_bank_money(trip_cost)
-
+        self._hud.add_bank_money(self._astronaut.get_trip_money())
         self._astronaut.set_trip_money(0.0)
         self._hud.set_trip_money(0.0)
-
         self._has_unboarded = True
         self._astronaut = None
+
 
     def update(self, *args, **kwargs) -> None:
         """
