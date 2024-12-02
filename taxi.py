@@ -225,10 +225,10 @@ class Taxi(pygame.sprite.Sprite):
             self._pad_landed_on = pad
 
             if Taxi._MAX_VELOCITY_SMOOTH_LANDING >= self._velocity.y >= 0.0:
-                self._smooth_landing.play()
+                self._rough_landing_sound.play()
 
             elif self._velocity.y > Taxi._MAX_VELOCITY_SMOOTH_LANDING:
-                self._rough_landing_sound.play()
+                self._smooth_landing.play()
 
             if self._astronaut:
                 if self._astronaut.target_pad and self._astronaut.target_pad.number == pad.number:
