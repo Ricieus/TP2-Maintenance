@@ -203,10 +203,6 @@ class Taxi(pygame.sprite.Sprite):
 
         #Condition vérifie si le bord gauche de taxi dépasse le position gauche du plateforme ou si le bord droite du taxi dépasse le position du plateforme a droite
         if taxi_edges_position[0] < platform_edges_position[0] or taxi_edges_position[1] > platform_edges_position[1]:
-            self._flags = self._FLAG_DESTROYED
-            self._crash_sound.play()
-            self._velocity = pygame.Vector2(0.0, 0.0)
-            self._acceleration = pygame.Vector2(0.0, Taxi._CRASH_ACCELERATION)
             return False
 
         if pygame.sprite.collide_mask(self, pad):
