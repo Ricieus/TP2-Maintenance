@@ -58,8 +58,6 @@ class LevelScene(Scene):
 
             self._gate = Gate(GameSettings.FILE_NAMES[Files.IMG_GATE], (582, 3))
 
-
-
             self._settings = GameSettings()
             self._hud = HUD()
 
@@ -103,7 +101,6 @@ class LevelScene(Scene):
             pad.initialize_pad_up(self._gate)
             self._reinitialize()
             self._hud.visible = True
-
 
         except FileNotFoundError as e:
             directory_plus_filename = str(e).split("'")[1]

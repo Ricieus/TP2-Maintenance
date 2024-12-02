@@ -53,7 +53,7 @@ class Taxi(pygame.sprite.Sprite):
     _MAX_ACCELERATION_Y_DOWN = 0.05
 
     _MAX_VELOCITY_SMOOTH_LANDING = 0.50  # vitesse maximale permise pour un atterrissage en douceur
-    _MIN_VELOCITY_SLIDE = 1 # vitesse minimale pour permettre le glissage du taxi
+    _MIN_VELOCITY_SLIDE = 1  # vitesse minimale pour permettre le glissage du taxi
     _SLIDE_POWER = 4
     _CRASH_ACCELERATION = 0.10
 
@@ -206,16 +206,20 @@ class Taxi(pygame.sprite.Sprite):
         platform_edges_position = (pad.rect.left + invisible_left_image, pad.rect.right - invisible_right_image)
 
         if taxi_edges_position[0] < platform_edges_position[0] or taxi_edges_position[1] > platform_edges_position[1]:
-            self._flags = self._FLAG_DESTROYED
-            self._crash_sound.play()
-            self._velocity = pygame.Vector2(0.0, 0.0)
-            self._acceleration = pygame.Vector2(0.0, Taxi._CRASH_ACCELERATION)
             return False
 
         if pygame.sprite.collide_mask(self, pad):
             self.rect.bottom = pad.rect.top + 4
             self._position.y = float(self.rect.y)
             self._flags &= Taxi._FLAG_LEFT | Taxi._FLAG_GEAR_OUT
+            if self._velocity.x > self._MIN_VELOCITY_SLIDE or self._velocity.x < -self._MIN_VELOCITY_SLIDE:
+                self._sliding = True
+                self._last_frame_time = time.time()
+                self._top_slide_length = self._velocity.x * self._SLIDE_POWER
+                if self._top_slide_length > self._max_slide_length:
+                    self._top_slide_length = self._max_slide_length
+                elif self._top_slide_length < -self._max_slide_length:
+                    self._top_slide_length = -self._max_slide_length
             self._velocity = pygame.Vector2(0.0, 0.0)
             self._acceleration = pygame.Vector2(0.0, 0.0)
             self._pad_landed_on = pad

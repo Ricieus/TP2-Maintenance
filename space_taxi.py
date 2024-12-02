@@ -23,7 +23,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import sys
 
-from game_settings import GameSettings
+from game_settings import GameSettings, Files
 from level_loading_scene import LevelLoadingScene
 from scene_manager import SceneManager
 from splash_scene import SplashScene
@@ -37,9 +37,8 @@ def main() -> None:
     settings = GameSettings()
     screen = pygame.display.set_mode((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
     pygame.display.set_caption("Tribute to Space Taxi!")
-    window_icon = pygame.image.load('img/space_taxi_icon.ico')
+    window_icon = pygame.image.load(GameSettings.FILE_NAMES[Files.IMG_SPACE_TAXI_ICON])
     pygame.display.set_icon(window_icon)
-
 
     clock = pygame.time.Clock()
 
