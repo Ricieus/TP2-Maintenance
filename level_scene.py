@@ -43,6 +43,7 @@ class LevelScene(Scene):
         self._pumps = None
         self._pads = None
         self._last_taxied_astronaut_time = time.time()
+        self._astronauts = []
 
         self._jingle_sound_effect = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_JINGLE])
         self._is_jingle_sound_on = True
@@ -107,6 +108,13 @@ class LevelScene(Scene):
             filename = directory_plus_filename.split("/")[-1]
             fatal_error_app = FatalError()
             fatal_error_app.run(filename)
+
+    def spawn_astronaut(self, start_pad, end_pad):
+        """ Crée un astronaute à partir d'un pad de départ et d'arrivée. """
+        astronaut = Astronaut(start_pad, end_pad)
+        self._astronauts.append(astronaut)
+        print(self._astronauts.__len__())
+        return astronaut
 
     def jingle_sound_play(self):
         self._is_jingle_sound_on = True
@@ -195,9 +203,11 @@ class LevelScene(Scene):
             elif self._astronaut.is_jumping_on_starting_pad():
                 self._astronaut.wait()
         else:
-            if self._nb_taxied_astronauts < len(
-                    self._astronauts) and time.time() - self._last_taxied_astronaut_time >= LevelScene._TIME_BETWEEN_ASTRONAUTS:
+            if self._nb_taxied_astronauts < len(self._astronauts) and time.time() - self._last_taxied_astronaut_time >= LevelScene._TIME_BETWEEN_ASTRONAUTS:
                 self._astronaut = self._astronauts[self._nb_taxied_astronauts]
+                new_astronaut = self.spawn_astronaut(self._pads[0], self._pads[3])
+                self._astronaut = new_astronaut
+                self._last_taxied_astronaut_time = time.time()
 
         # Mise à jour du taxi et gestion des collisions
         self._taxi.update()
@@ -274,3 +284,4 @@ class LevelScene(Scene):
     def game_over_validation(self):
         if self._hud.get_lives() <= 0: #Condition pour voir si le joueur n'a pas de vie
             SceneManager().change_scene("game_over", LevelScene._FADE_OUT_DURATION) #Si le joueur n'a pas de vie, alors ca change le scène à game_over
+
