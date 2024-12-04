@@ -98,7 +98,7 @@ class LevelScene(Scene):
                 self._pads.append(Pad(int(key[3:]), img_path, (int(x), int(y)), int(width), int(height)))
             self._pad_sprites = pygame.sprite.Group()
             self._pad_sprites.add(self._pads)
-            pad.initialize_pad_up(self._gate)
+            Pad.UP = self._gate
             self._reinitialize()
             self._hud.visible = True
 
