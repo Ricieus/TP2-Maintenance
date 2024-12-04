@@ -90,15 +90,4 @@ class Pad(pygame.sprite.Sprite):
 
         return surface
 
-def initialize_pad_up(gate):
-    """
-    Initialise Pad.UP avec les mêmes coordonnées que 'gate'.
-    :param gate: L'objet représentant la sortie du niveau, doit avoir des attributs de position x et y.
-    """
-    Pad.UP = Pad(
-        number=-1,  # Numéro spécial pour la sortie
-        filename="img/gate.png",  # Utilisez une image placeholder
-        pos=(gate.rect.x, gate.rect.y),  # Coordonnées identiques à celles de gate
-        astronaut_start_x=0,  # Ajustez selon vos besoins
-        astronaut_end_x=0     # Ajustez selon vos besoins
-    )
+
