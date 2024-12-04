@@ -61,7 +61,11 @@ class Astronaut(pygame.sprite.Sprite):
         self._source_pad = source_pad
         self._target_pad = target_pad
         start_x, start_y = self._source_pad.astronaut_start.x, self._source_pad.astronaut_start.y
-        end_x, end_y = self._target_pad.astronaut_end.x, self._target_pad.astronaut_end.y
+        if isinstance(self._target_pad, Pad):
+            end_x, end_y = self._target_pad.astronaut_end.x, self._target_pad.astronaut_end.y
+        else:
+            # Utilisez des coordonnées par défaut ou une autre logique pour Gate
+            end_x, end_y = self._target_pad.rect.x, self._target_pad.rect.y
         distance = sqrt((end_x - start_x) ** 2 + (end_y - start_y) ** 2)
         self._trip_money = distance * Astronaut._TARIFF_PER_UNIT_DISTANCE
 
@@ -226,7 +230,7 @@ class Astronaut(pygame.sprite.Sprite):
                     self._state = AstronautState.REACHED_DESTINATION
                 else:
                     self._state = AstronautState.ONBOARD
-                    if self._target_pad is None:
+                    if self._target_pad is Pad.UP:
                         self._pad_please_clips[0].play()
                         self._hud.set_current_pad("UP")
                     else:
