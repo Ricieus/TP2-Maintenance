@@ -110,7 +110,6 @@ class LevelScene(Scene):
             fatal_error_app.run(filename)
 
     def _spawn_astronaut(self, start_pad_number, end_pad_number):
-        """ Crée un astronaute à partir d'un pad de départ et d'arrivée. """
         start_pad = self._pads[int(start_pad_number) - 1]
         try:
             end_pad = self._pads[int(end_pad_number) - 1]
