@@ -33,7 +33,8 @@ class Taxi(pygame.sprite.Sprite):
     _NB_TAXI_IMAGES = 6
 
     _NB_SLIDE_FRAMES = 3
-    _SLIDE_FRAME_TIME = 0.5
+    _SLIDE_FRAME_TIME = 0.05
+    _ROUGH_LANDING_FRAME_TIME = 0.5
 
     _FLAG_LEFT = 1 << 0  # indique si le taxi va vers la gauche
     _FLAG_TOP_REACTOR = 1 << 1  # indique si le réacteur du dessus est allumé
@@ -79,7 +80,7 @@ class Taxi(pygame.sprite.Sprite):
 
         self._crash_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_CRASH])
 
-        self._smooth_landing = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SMOOTH_LANDING])
+        self._smooth_landing_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SMOOTH_LANDING])
         self._rough_landing_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.ROUGH_LANDING])
         self._has_unboarded = False
         self._surfaces, self._masks = Taxi._load_and_build_surfaces()
@@ -216,18 +217,22 @@ class Taxi(pygame.sprite.Sprite):
             if self._velocity.x > self._MIN_VELOCITY_SLIDE or self._velocity.x < -self._MIN_VELOCITY_SLIDE:
                 self._sliding = True
                 self._last_frame_time = time.time()
+                self._accumulated_frame_time = 0
                 self._top_slide_length = self._velocity.x * self._SLIDE_POWER
                 if self._top_slide_length > self._max_slide_length:
                     self._top_slide_length = self._max_slide_length
                 elif self._top_slide_length < -self._max_slide_length:
                     self._top_slide_length = -self._max_slide_length
 
-            if Taxi._MAX_VELOCITY_ROUGH_LANDING > self._velocity.y > Taxi._MAX_VELOCITY_SMOOTH_LANDING:
+            if Taxi._MAX_VELOCITY_ROUGH_LANDING > self._velocity.y:
                 print("rough landing")
+                self._last_frame_time = time.time()
+                self._accumulated_frame_time = 0
+                self._rough_landing = True
                 self._rough_landing_sound.play()
             elif Taxi._MAX_VELOCITY_SMOOTH_LANDING > self._velocity.y:
                 print("smooth landing")
-                self._smooth_landing.play()
+                self._smooth_landing_sound.play()
 
             self._velocity = pygame.Vector2(0.0, 0.0)
             self._acceleration = pygame.Vector2(0.0, 0.0)
@@ -236,6 +241,7 @@ class Taxi(pygame.sprite.Sprite):
             if self._astronaut:
                 if self._astronaut.target_pad and self._astronaut.target_pad.number == pad.number:
                     self.unboard_astronaut()
+
             return True
 
         return False
@@ -280,21 +286,32 @@ class Taxi(pygame.sprite.Sprite):
         # ÉTAPE 1 - gérer les touches présentement enfoncées
         self._handle_keys()
 
-        # ÉTAPE 2 - gérer le taxi qui glisse
+        # ÉTAPE 2 - gérer le taxi qui glisse et ses atterrissages limites
         current_time = time.time()
-        self._accumulated_frame_time += current_time - self._last_frame_time
-        if self._sliding and self._accumulated_frame_time > self._SLIDE_FRAME_TIME:
-            self._accumulated_frame_time = 0
-            if self._current_slide_frame < self._NB_SLIDE_FRAMES:
-                self._slide_length_per_images = self._top_slide_length // (
-                        self._NB_SLIDE_FRAMES - self._current_slide_frame)
-                self._position.x += self._slide_length_per_images
-                self._top_slide_length -= self._slide_length_per_images
-                self._current_slide_frame += 1
-            else:
-                self._sliding = False
-                self._current_slide_frame = 0
-                self._top_slide_length = 0
+        self._accumulated_frame_time = current_time - self._last_frame_time
+
+        if self._sliding:
+            if self._accumulated_frame_time > self._SLIDE_FRAME_TIME:
+                self._last_frame_time = current_time
+                if self._current_slide_frame < self._NB_SLIDE_FRAMES:
+                    self._slide_length_per_images = self._top_slide_length // (
+                            self._NB_SLIDE_FRAMES - self._current_slide_frame)
+                    self._position.x += self._slide_length_per_images
+                    self._top_slide_length -= self._slide_length_per_images
+                    self._current_slide_frame += 1
+                else:
+                    self._sliding = False
+                    self._current_slide_frame = 0
+                    self._top_slide_length = 0
+
+        if self._rough_landing:
+            print(self._accumulated_frame_time)
+            self._flags |= Taxi._FLAG_GEAR_SHOCKS
+            if self._accumulated_frame_time > self._ROUGH_LANDING_FRAME_TIME:
+                self._last_frame_time = current_time
+                self._flags &= ~Taxi._FLAG_GEAR_SHOCKS
+                self._rough_landing = False
+
 
         # ÉTAPE 3 - calculer la nouvelle position du taxi
         self._velocity += self._acceleration
@@ -417,6 +434,8 @@ class Taxi(pygame.sprite.Sprite):
         self._top_slide_length = 0
         self._sliding = False
 
+        self._rough_landing = False
+
         self._pad_landed_on = None
         self._taking_off = False
 
@@ -471,9 +490,9 @@ class Taxi(pygame.sprite.Sprite):
             self.mask = self._masks[ImgSelector.GEAR_OUT][facing]
             return
 
-        if self._flags & Taxi._FLAG_GEAR_OUT:
-            self.image = self._surfaces[ImgSelector.GEAR_OUT][facing]
-            self.mask = self._masks[ImgSelector.GEAR_OUT][facing]
+        if self._flags & Taxi._FLAG_GEAR_SHOCKS:
+            self.image = self._surfaces[ImgSelector.GEAR_SHOCKS][facing]
+            self.mask = self._masks[ImgSelector.GEAR_SHOCKS][facing]
             return
 
         self.image = self._surfaces[ImgSelector.IDLE][facing]
