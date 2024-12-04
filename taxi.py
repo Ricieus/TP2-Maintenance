@@ -237,46 +237,6 @@ class Taxi(pygame.sprite.Sprite):
 
         return False
 
-        pad.image.lock()
-        for x in range(pad.image.get_width()): #TODO: à refactoriser
-            r, g, b, a = pad.image.get_at((x, 0))
-            if a != 0:
-                visible_platform += 1
-            elif a == 0 and visible_platform == 0:
-                invisible_left_image += 1
-            elif a == 0:
-                invisible_right_image += 1
-        pad.image.unlock()
-
-        platform_edges_position = (pad.rect.left + invisible_left_image, pad.rect.right - invisible_right_image)
-
-        #Condition vérifie si le bord gauche de taxi dépasse le position gauche du plateforme ou si le bord droite du taxi dépasse le position du plateforme a droite
-        if taxi_edges_position[0] < platform_edges_position[0] or taxi_edges_position[1] > platform_edges_position[1]:
-            return False
-
-        if pygame.sprite.collide_mask(self, pad):
-            self.rect.bottom = pad.rect.top + 4
-            self._position.y = float(self.rect.y)
-            self._flags &= Taxi._FLAG_LEFT | Taxi._FLAG_GEAR_OUT
-            if self._velocity.x > self._MIN_VELOCITY_SLIDE or self._velocity.x < -self._MIN_VELOCITY_SLIDE:
-                self._sliding = True
-                self._last_frame_time = time.time()
-                self._top_slide_length = self._velocity.x * self._SLIDE_POWER
-                if self._top_slide_length > self._max_slide_length:
-                    self._top_slide_length = self._max_slide_length
-                elif self._top_slide_length < -self._max_slide_length:
-                    self._top_slide_length = -self._max_slide_length
-                print(self._top_slide_length)
-            self._velocity = pygame.Vector2(0.0, 0.0)
-            self._acceleration = pygame.Vector2(0.0, 0.0)
-            self._pad_landed_on = pad
-            if self._astronaut:
-                if self._astronaut.target_pad and self._astronaut.target_pad.number == pad.number:
-                    self.unboard_astronaut()
-            return True
-
-        return False
-
     def refuel_from(self, pump: Pump) -> bool:
         """
         Vérifie si le taxi est en position de faire le plein d'essence.
