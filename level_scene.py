@@ -214,7 +214,7 @@ class LevelScene(Scene):
 
         for pad in self._pads:
             if self._taxi.land_on_pad(pad):
-                pass  # Effets secondaires d'un atterrissage ici
+                pass  # Effets secondaires d'un atterrissage ici (sliding)
             elif self._taxi.crash_on_obstacle(pad):
                 self.reset_money_after_crash()
                 self._hud.loose_live()
