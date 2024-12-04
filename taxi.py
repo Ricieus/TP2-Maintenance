@@ -150,7 +150,7 @@ class Taxi(pygame.sprite.Sprite):
 
         if self.rect.colliderect(astronaut.rect):
             if pygame.sprite.collide_mask(self, astronaut):
-                astronaut.play_destination_clip()
+                astronaut.play_hey_clip()
                 if self._has_unboarded:
                     astronaut._state = AstronautState.REACHED_DESTINATION
                     hitting_fines = self._hud._last_saved_money / 2
