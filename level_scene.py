@@ -246,7 +246,8 @@ class LevelScene(Scene):
         self._obstacle_sprites.draw(screen)
         self._gate.draw(screen)
         self._pump_sprites.draw(screen)
-        self._pad_sprites.draw(screen)
+        for pad_sprites in self._pad_sprites:
+            pad_sprites.draw(screen)
         if self._taxi:
             self._taxi.draw(screen)
         if self._astronaut:
