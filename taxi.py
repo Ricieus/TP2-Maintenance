@@ -87,6 +87,7 @@ class Taxi(pygame.sprite.Sprite):
 
         self._fuel_status = 100
         self._fuel_consumption = 0.0
+        self._is_not_up = False
 
         self._reinitialize()
 
@@ -306,10 +307,15 @@ class Taxi(pygame.sprite.Sprite):
 
         if self._rough_landing:
             self._flags = (self._flags & ~Taxi._FLAG_GEAR_OUT) | Taxi._FLAG_GEAR_SHOCKS
+
             if self._accumulated_rough_landing_frame_time > self._ROUGH_LANDING_FRAME_TIME:
                 self._last_rough_landing_frame_time = current_time
                 self._flags = (self._flags & ~Taxi._FLAG_GEAR_SHOCKS) | Taxi._FLAG_GEAR_OUT
                 self._rough_landing = False
+                self._is_not_up = True
+                # keys = pygame.key.get_pressed()
+                # if keys[pygame.K_UP]:
+                #     self.hide_gear()
 
         # ÉTAPE 3 - calculer la nouvelle position du taxi
         self._velocity += self._acceleration
@@ -378,6 +384,8 @@ class Taxi(pygame.sprite.Sprite):
             self._fuel_consumption += self._acceleration.y
             if self._pad_landed_on:
                 self._pad_landed_on = None
+                self.hide_gear()
+            if self._is_not_up:
                 self.hide_gear()
 
         if not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
