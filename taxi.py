@@ -306,7 +306,7 @@ class Taxi(pygame.sprite.Sprite):
 
         if self._rough_landing:
             self._flags = (self._flags & ~Taxi._FLAG_GEAR_OUT) | Taxi._FLAG_GEAR_SHOCKS
-            if self._accumulated_slide_frame_time > self._ROUGH_LANDING_FRAME_TIME:
+            if self._accumulated_rough_landing_frame_time > self._ROUGH_LANDING_FRAME_TIME:
                 self._last_rough_landing_frame_time = current_time
                 self._flags = (self._flags & ~Taxi._FLAG_GEAR_SHOCKS) | Taxi._FLAG_GEAR_OUT
                 self._rough_landing = False
@@ -378,8 +378,7 @@ class Taxi(pygame.sprite.Sprite):
             self._fuel_consumption += self._acceleration.y
             if self._pad_landed_on:
                 self._pad_landed_on = None
-                if self._flags & (Taxi._FLAG_GEAR_OUT | Taxi._FLAG_GEAR_SHOCKS):  # Si le taxi a sorti ses pattes
-                    self._flags &= ~(Taxi._FLAG_GEAR_OUT | Taxi._FLAG_GEAR_SHOCKS)  # On enlève ses pattes
+                self.hide_gear()
 
         if not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
             self._flags &= ~(Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_BOTTOM_REACTOR)
@@ -403,6 +402,11 @@ class Taxi(pygame.sprite.Sprite):
         else:
             self._fuel_status = 100
         self._hud.set_current_fuel(self._fuel_status)
+
+    def hide_gear(self) -> None:
+        """ Pour faire  rentrer le train d’atterrissage au décollage d’une plateforme. """
+        if self._flags & (Taxi._FLAG_GEAR_OUT | Taxi._FLAG_GEAR_SHOCKS):  # Si le taxi a sorti ses pattes
+            self._flags &= ~(Taxi._FLAG_GEAR_OUT | Taxi._FLAG_GEAR_SHOCKS)  # On enlève ses pattes
 
     def _reinitialize(self) -> None:
         """ Initialise (ou réinitialise) les attributs de l'instance. """
