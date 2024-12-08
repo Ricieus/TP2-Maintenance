@@ -59,7 +59,7 @@ class GameSettings:
         ],
         Files.VOICES_ASTRONAUT_HEY: "voices/gary_hey_01.mp3",
         Files.IMG_ICON_LIVES: "img/hud_lives.png",
-        Files.IMG_LOADING: "img/loading.png",
+        Files.IMG_LOADING: "img/new_loading.jpg",
         Files.SND_MUSIC_LOADING: "snd/390539__burghrecords__dystopian-future-fx-sounds-8.wav",
         Files.IMG_LEVEL: "img/space01.png",
         Files.SND_MUSIC_LEVEL: "snd/476556__magmisoundtracks__sci-fi-music-loop-01.wav",
