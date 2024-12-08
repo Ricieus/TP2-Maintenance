@@ -24,9 +24,25 @@ class SplashScene(Scene):
         self._text_alpha = 0
         self._fade_in = True
 
+        pygame.joystick.init()
+        if pygame.joystick.get_count() > 0:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()  # Initialiser le premier joystick
+            print(f"Joystick détecté: {self.joystick.get_name()}")
+        else:
+            self.joystick = None
+            print("Aucun joystick détecté")
+
     def handle_event(self, event: pygame.event.Event) -> None:
+        """ Gère les événements du clavier et du joystick. """
         if event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                self._fade_out_start_time = pygame.time.get_ticks()
+                SceneManager().change_scene("level1_load", SplashScene._FADE_OUT_DURATION)
+
+        if event.type == pygame.JOYBUTTONDOWN:
+            joystick = pygame.joystick.Joystick(0)
+            if joystick.get_button(9):
                 self._fade_out_start_time = pygame.time.get_ticks()
                 SceneManager().change_scene("level1_load", SplashScene._FADE_OUT_DURATION)
 

@@ -49,6 +49,12 @@ class LevelScene(Scene):
         self._is_jingle_sound_on = True
         self._jingle_begin_time = 0
         self._is_first_update_valid = False
+        pygame.joystick.init()
+        if pygame.joystick.get_count() > 0:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+        else:
+            self.joystick = None
 
         try:
             self.config = configparser.ConfigParser()
@@ -129,8 +135,11 @@ class LevelScene(Scene):
         if self._is_jingle_sound_on:
             return
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and self._taxi.is_destroyed():
+        if event.type in (pygame.KEYDOWN, pygame.JOYBUTTONDOWN) and self._taxi.is_destroyed():
+            is_key_event = (event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE))
+            is_joy_event = (event.type == pygame.JOYBUTTONDOWN and pygame.joystick.Joystick(0).get_button(9))
+
+            if is_key_event or is_joy_event :
                 self._taxi.reset()
                 self._retry_current_astronaut()
                 self._jingle_sound_play()

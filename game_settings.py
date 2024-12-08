@@ -29,6 +29,7 @@ class Files(Enum):
     ROUGH_LANDING = auto()
     SMOOTH_LANDING = auto()
     IMG_SPACE_TAXI_ICON = auto()
+    GAME_OVER_IMG = auto()
 
 
 class GameSettings:
@@ -90,7 +91,8 @@ class GameSettings:
         Files.SND_JINGLE: "snd/jingle.mp3",
         Files.ROUGH_LANDING: "snd/land2-43790.mp3",
         Files.SMOOTH_LANDING: "snd/rocket-landing-38715.mp3",
-        Files.IMG_SPACE_TAXI_ICON: 'img/space_taxi_icon.ico'
+        Files.IMG_SPACE_TAXI_ICON: 'img/space_taxi_icon.ico',
+        Files.GAME_OVER_IMG: "img/game_over.jpg"
     }
 
     _instance = None

@@ -32,12 +32,20 @@ class LevelLoadingScene(Scene):
             fatal_error_app = FatalError()
             fatal_error_app.run(filename)
 
+        pygame.joystick.init()
+        if pygame.joystick.get_count() > 0:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+        else:
+            self.joystick = None
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        if event.type == pygame.KEYDOWN:
-            if event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                self._fade_out_start_time = pygame.time.get_ticks()
+        if event.type in (pygame.KEYDOWN, pygame.JOYBUTTONDOWN):
+            is_key_event = (event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE))
+            is_joy_event = (event.type == pygame.JOYBUTTONDOWN and pygame.joystick.Joystick(0).get_button(9))
 
+            if is_key_event or is_joy_event:
+                self._fade_out_start_time = pygame.time.get_ticks()
                 SceneManager().change_scene(f"level{self._level}", LevelLoadingScene._FADE_OUT_DURATION)
 
     def update(self) -> None:
