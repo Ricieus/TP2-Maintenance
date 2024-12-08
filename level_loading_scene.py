@@ -87,7 +87,6 @@ class LevelLoadingScene(Scene):
             self._taxi_position.y -= self._vertical_speed
             self._taxi_position.x += self._direction_taxi * self._horizontal_speed
             self._distance_traveled += self._horizontal_speed
-            print(self._distance_traveled)
             if self._distance_traveled > self._horizontal_travel:
                 if self._first_segment:
                     self._horizontal_travel *= 2
