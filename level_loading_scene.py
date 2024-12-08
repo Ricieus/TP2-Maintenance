@@ -94,6 +94,10 @@ class LevelLoadingScene(Scene):
                 self._horizontal_travel -= 10
                 self._distance_traveled = 0
                 self._first_segment = False
+
+                self._taxi_sprite = pygame.transform.flip(
+                    self._taxi_surface.subsurface((0, 0, self._taxi_width / Taxi._NB_TAXI_IMAGES, self._taxi_height)),
+                    self._direction_taxi == -1, False)
         else:
             SceneManager().change_scene(f"level{self._level}", LevelLoadingScene._FADE_OUT_DURATION)
 
