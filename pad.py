@@ -1,15 +1,18 @@
 import pygame
-
+import gate
 from game_settings import GameSettings
 
 
 class Pad(pygame.sprite.Sprite):
     """ Plateforme. """
 
-    UP = None  # Pad.UP est utilisé pour indiquer la sortie du niveau
+    # Initialisation de Pad.UP en tant qu'instance de Pad, pas une classe
+    UP = None  # Pad.UP sera initialisé plus tard avec une instance de Pad
 
     _TEXT_COLOR = (255, 255, 255)
     _HEIGHT = 40
+
+    _PAD_SURFACES = {}
 
     def __init__(self, number: int, filename: str, pos: tuple, astronaut_start_x: int, astronaut_end_x: int) -> None:
         """
@@ -23,11 +26,18 @@ class Pad(pygame.sprite.Sprite):
         super(Pad, self).__init__()
 
         self.number = number
-        self.image = pygame.image.load(filename).convert_alpha()
-        self.mask = pygame.mask.from_surface(self.image)
+
+        if filename in self._PAD_SURFACES:
+            self.image, self.mask = self._PAD_SURFACES[filename]
+        else:
+            self.image = pygame.image.load(filename).convert_alpha()
+            self.mask = pygame.mask.from_surface(self.image)
+
+            self._PAD_SURFACES[filename] = (self.image, self.mask)
 
         font = GameSettings().pad_font
         self._label_text = font.render(f"  PAD {number}  ", True, Pad._TEXT_COLOR)
+
         text_width, text_height = self._label_text.get_size()
 
         background_height = text_height + 4
@@ -88,3 +98,5 @@ class Pad(pygame.sprite.Sprite):
         surface.unlock()
 
         return surface
+
+

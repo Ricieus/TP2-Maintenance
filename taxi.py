@@ -1,11 +1,14 @@
+import time
 from enum import Enum, auto
 
 import pygame
+from pygame import Vector2
 
+from fatal_error import FatalError
 from game_settings import GameSettings, Files
 from astronaut import Astronaut, AstronautState
 from hud import HUD
-from obstacle import Obstacle
+
 from pad import Pad
 from pump import Pump
 
@@ -30,12 +33,17 @@ class Taxi(pygame.sprite.Sprite):
     _TAXIS_FILENAME = GameSettings.FILE_NAMES[Files.IMG_TAXIS]
     _NB_TAXI_IMAGES = 6
 
+    _NB_SLIDE_FRAMES = 3
+    _SLIDE_FRAME_TIME = 0.05
+    _ROUGH_LANDING_FRAME_TIME = 0.5
+
     _FLAG_LEFT = 1 << 0  # indique si le taxi va vers la gauche
     _FLAG_TOP_REACTOR = 1 << 1  # indique si le réacteur du dessus est allumé
     _FLAG_BOTTOM_REACTOR = 1 << 2  # indique si le réacteur du dessous est allumé
     _FLAG_REAR_REACTOR = 1 << 3  # indique si le réacteur arrière est allumé
     _FLAG_GEAR_OUT = 1 << 4  # indique si le train d'atterrissage est sorti
-    _FLAG_DESTROYED = 1 << 5  # indique si le taxi est détruit
+    _FLAG_GEAR_SHOCKS = 1 << 5 # indique si le train d'atterrissage est compressé
+    _FLAG_DESTROYED = 1 << 6  # indique si le taxi est détruit
 
     _REACTOR_SOUND_VOLUME = 0.25
 
@@ -48,6 +56,9 @@ class Taxi(pygame.sprite.Sprite):
     _MAX_ACCELERATION_Y_DOWN = 0.05
 
     _MAX_VELOCITY_SMOOTH_LANDING = 0.50  # vitesse maximale permise pour un atterrissage en douceur
+    _MAX_VELOCITY_ROUGH_LANDING = 0.60
+    _MIN_VELOCITY_SLIDE = 1  # vitesse minimale pour permettre le glissage du taxi
+    _SLIDE_POWER = 4
     _CRASH_ACCELERATION = 0.10
 
     _FRICTION_MUL = 0.9995  # la vitesse horizontale est multipliée par la friction
@@ -63,16 +74,31 @@ class Taxi(pygame.sprite.Sprite):
         self._initial_pos = pos
 
         self._hud = HUD()
+        try:
+            self._reactor_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_REACTOR])
+            self._reactor_sound.set_volume(0)
+            self._reactor_sound.play(-1)
 
-        self._reactor_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_REACTOR])
-        self._reactor_sound.set_volume(0)
-        self._reactor_sound.play(-1)
+            self._crash_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_CRASH])
 
-        self._crash_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_CRASH])
-        self._has_unboarded = False
-        self._surfaces, self._masks = Taxi._load_and_build_surfaces()
+            self._smooth_landing_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SMOOTH_LANDING])
+            self._rough_landing_sound = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.ROUGH_LANDING])
+            self._has_unboarded = False
+            self._surfaces, self._masks = Taxi._load_and_build_surfaces()
 
-        self._reinitialize()
+            self._fuel_status = 100
+            self._fuel_consumption = 0.0
+
+            pygame.joystick.init()
+
+            self._reinitialize()
+        except FileNotFoundError as e:
+            directory_plus_filename = str(e).split("'")[1]
+            filename = directory_plus_filename.split("/")[-1]
+            fatal_error_app = FatalError()
+            fatal_error_app.run(filename)
+
+
 
     @property
     def pad_landed_on(self) -> Pad or None:
@@ -95,11 +121,10 @@ class Taxi(pygame.sprite.Sprite):
             if pygame.sprite.collide_mask(self, obstacle):
                 self._flags = self._FLAG_DESTROYED
                 self._crash_sound.play()
-                self._velocity_x = 0.0
-                self._velocity_y = 0.0
-                self._acceleration_x = 0.0
-                self._acceleration_y = Taxi._CRASH_ACCELERATION
-
+                self._velocity = pygame.Vector2(0.0, 0.0)
+                self._acceleration = pygame.Vector2(0.0, Taxi._CRASH_ACCELERATION)
+                self._fuel_status = 100
+                self._hud.set_current_fuel(self._fuel_status)
                 return True
 
     def draw(self, surface: pygame.Surface) -> None:
@@ -108,16 +133,16 @@ class Taxi(pygame.sprite.Sprite):
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """ Gère les événements du taxi. """
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                if self._pad_landed_on is None:
-                    if self._flags & Taxi._FLAG_GEAR_OUT != Taxi._FLAG_GEAR_OUT:
-                        # pas de réacteurs du dessus et arrière lorsque le train d'atterrissage est sorti
-                        self._flags &= ~(Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_REAR_REACTOR)
+        if (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE) or \
+                (event.type == pygame.JOYBUTTONDOWN and event.button == 1):
+            if self._pad_landed_on is None:
+                if self._flags & Taxi._FLAG_GEAR_OUT != Taxi._FLAG_GEAR_OUT:
+                    # Pas de réacteurs du dessus et arrière lorsque le train d'atterrissage est sorti
+                    self._flags &= ~(Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_REAR_REACTOR)
 
-                    self._flags ^= Taxi._FLAG_GEAR_OUT  # flip le bit pour refléter le nouvel état
+                self._flags ^= Taxi._FLAG_GEAR_OUT # flip le bit pour refléter le nouvel état
 
-                    self._select_image()
+                self._select_image()
 
     def has_exited(self) -> bool:
         """
@@ -137,6 +162,7 @@ class Taxi(pygame.sprite.Sprite):
 
         if self.rect.colliderect(astronaut.rect):
             if pygame.sprite.collide_mask(self, astronaut):
+                astronaut.play_hey_clip()
                 if self._has_unboarded:
                     astronaut._state = AstronautState.REACHED_DESTINATION
                     hitting_fines = self._hud._last_saved_money / 2
@@ -166,20 +192,20 @@ class Taxi(pygame.sprite.Sprite):
         if not gear_out:
             return False
 
-        if self._velocity_y > Taxi._MAX_VELOCITY_SMOOTH_LANDING or self._velocity_y < 0.0:#self._acceleration_y < 0.0:
+        if self._velocity.y > Taxi._MAX_VELOCITY_ROUGH_LANDING or self._velocity.y < 0.0:
             return False
 
         if not self.rect.colliderect(pad.rect):
             return False
 
-        taxi_edges_position = (self.rect.left, self.rect.right) #tuple qui prend le position gauche et droite de taxi
+        taxi_edges_position = (self.rect.left, self.rect.right)
 
         visible_platform = 0
         invisible_left_image = 0
         invisible_right_image = 0
 
         pad.image.lock()
-        for x in range(pad.image.get_width()): #TODO: à refactoriser
+        for x in range(pad.image.get_width()):
             r, g, b, a = pad.image.get_at((x, 0))
             if a != 0:
                 visible_platform += 1
@@ -191,25 +217,40 @@ class Taxi(pygame.sprite.Sprite):
 
         platform_edges_position = (pad.rect.left + invisible_left_image, pad.rect.right - invisible_right_image)
 
-        #Condition vérifie si le bord gauche de taxi dépasse le position gauche du plateforme ou si le bord droite du taxi dépasse le position du plateforme a droite
         if taxi_edges_position[0] < platform_edges_position[0] or taxi_edges_position[1] > platform_edges_position[1]:
-            self._flags = self._FLAG_DESTROYED
-            self._crash_sound.play()
-            self._velocity_x = 0.0
-            self._velocity_y = 0.0
-            self._acceleration_x = 0.0
-            self._acceleration_y = Taxi._CRASH_ACCELERATION
             return False
 
         if pygame.sprite.collide_mask(self, pad):
             self.rect.bottom = pad.rect.top + 4
-            self._pos_y = float(self.rect.y)
+            self._position.y = float(self.rect.y)
             self._flags &= Taxi._FLAG_LEFT | Taxi._FLAG_GEAR_OUT
-            self._velocity_x = self._velocity_y = self._acceleration_x = self._acceleration_y = 0.0
+
+            if self._velocity.x > self._MIN_VELOCITY_SLIDE or self._velocity.x < -self._MIN_VELOCITY_SLIDE:
+                self._sliding = True
+                self._last_slide_frame_time = time.time()
+                self._accumulated_slide_frame_time = 0
+                self._top_slide_length = self._velocity.x * self._SLIDE_POWER
+                if self._top_slide_length > self._max_slide_length:
+                    self._top_slide_length = self._max_slide_length
+                elif self._top_slide_length < -self._max_slide_length:
+                    self._top_slide_length = -self._max_slide_length
+
+            if Taxi._MAX_VELOCITY_ROUGH_LANDING > self._velocity.y > Taxi._MAX_VELOCITY_SMOOTH_LANDING:
+                self._last_rough_landing_frame_time = time.time()
+                self._accumulated_rough_landing_frame_time = 0
+                self._rough_landing = True
+                self._rough_landing_sound.play()
+            elif Taxi._MAX_VELOCITY_SMOOTH_LANDING > self._velocity.y:
+                self._smooth_landing_sound.play()
+
+            self._velocity = pygame.Vector2(0.0, 0.0)
+            self._acceleration = pygame.Vector2(0.0, 0.0)
             self._pad_landed_on = pad
+
             if self._astronaut:
                 if self._astronaut.target_pad and self._astronaut.target_pad.number == pad.number:
                     self.unboard_astronaut()
+
             return True
 
         return False
@@ -235,14 +276,14 @@ class Taxi(pygame.sprite.Sprite):
     def unboard_astronaut(self) -> None:
         """ Fait descendre l'astronaute qui se trouve à bord. """
         if self._astronaut.target_pad is not Pad.UP:
-            self._astronaut.move(self.rect.x + 20, self._pad_landed_on.rect.y - self._astronaut.rect.height)
-            self._astronaut.jump(self._pad_landed_on.astronaut_end.x)
+            self._astronaut.unboard(self.rect.x + 20, self._pad_landed_on.rect.y - self._astronaut.rect.height)
 
         self._hud.add_bank_money(self._astronaut.get_trip_money())
         self._astronaut.set_trip_money(0.0)
         self._hud.set_trip_money(0.0)
         self._has_unboarded = True
         self._astronaut = None
+
 
     def update(self, *args, **kwargs) -> None:
         """
@@ -254,82 +295,139 @@ class Taxi(pygame.sprite.Sprite):
         # ÉTAPE 1 - gérer les touches présentement enfoncées
         self._handle_keys()
 
-        # ÉTAPE 2 - calculer la nouvelle position du taxi
-        self._velocity_x += self._acceleration_x
-        self._velocity_x *= Taxi._FRICTION_MUL
-        self._velocity_y += self._acceleration_y
+        # ÉTAPE 2 - gérer le taxi qui glisse et ses atterrissages limites
+        current_time = time.time()
+        self._accumulated_slide_frame_time = current_time - self._last_slide_frame_time
+        self._accumulated_rough_landing_frame_time = current_time - self._last_rough_landing_frame_time
+
+        if self._sliding:
+            if self._accumulated_slide_frame_time > self._SLIDE_FRAME_TIME:
+                self._last_slide_frame_time = current_time
+                if self._current_slide_frame < self._NB_SLIDE_FRAMES:
+                    self._slide_length_per_images = self._top_slide_length // (
+                            self._NB_SLIDE_FRAMES - self._current_slide_frame)
+                    self._position.x += self._slide_length_per_images
+                    self._top_slide_length -= self._slide_length_per_images
+                    self._current_slide_frame += 1
+                else:
+                    self._sliding = False
+                    self._current_slide_frame = 0
+                    self._top_slide_length = 0
+
+        if self._rough_landing:
+            self._flags = (self._flags & ~Taxi._FLAG_GEAR_OUT) | Taxi._FLAG_GEAR_SHOCKS
+            if self._accumulated_rough_landing_frame_time > self._ROUGH_LANDING_FRAME_TIME:
+                self._last_rough_landing_frame_time = current_time
+                self._flags = (self._flags & ~Taxi._FLAG_GEAR_SHOCKS) | Taxi._FLAG_GEAR_OUT
+                self._rough_landing = False
+
+        # ÉTAPE 3 - calculer la nouvelle position du taxi
+        self._velocity += self._acceleration
+        self._velocity.x *= Taxi._FRICTION_MUL
         if self._pad_landed_on is None:
-            self._velocity_y += Taxi._GRAVITY_ADD
+            self._velocity.y += Taxi._GRAVITY_ADD
 
-        self._pos_x += self._velocity_x
-        self._pos_y += self._velocity_y
+        self._position += self._velocity
 
-        self.rect.x = round(self._pos_x)
-        self.rect.y = round(self._pos_y)
+        self.rect.x = round(self._position.x)
+        self.rect.y = round(self._position.y)
 
         if self.has_exited():
             self._reactor_sound.set_volume(0)
             return
 
-        # ÉTAPE 3 - fait entendre les réacteurs ou pas
+        # ÉTAPE 4 - fait entendre les réacteurs ou pas
         reactor_flags = Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_REAR_REACTOR | Taxi._FLAG_BOTTOM_REACTOR
         if self._flags & reactor_flags:
             self._reactor_sound.set_volume(Taxi._REACTOR_SOUND_VOLUME)
         else:
             self._reactor_sound.set_volume(0)
 
-        # ÉTAPE 4 - sélectionner la bonne image en fonction de l'état du taxi
+        # ÉTAPE 5 - sélectionner la bonne image en fonction de l'état du taxi
         self._select_image()
 
     def _handle_keys(self) -> None:
-        """ Change ou non l'état du taxi en fonction des touches présentement enfoncées. """
+        """ Change ou non l'état du taxi en fonction des touches présentement enfoncées"""
         if self._flags & Taxi._FLAG_DESTROYED == Taxi._FLAG_DESTROYED:
             return
 
         keys = pygame.key.get_pressed()
+        gamepad = pygame.joystick.Joystick(0) if pygame.joystick.get_count() > 0 else None
+        if gamepad:
+            gamepad.init()
 
-        gear_out = self._flags & Taxi._FLAG_GEAR_OUT == Taxi._FLAG_GEAR_OUT
+        gamepad_left_x = gamepad.get_axis(0) if gamepad else 0
+        gamepad_left_y = gamepad.get_axis(1) if gamepad else 0
+        gamepad_right_x = gamepad.get_axis(3) if gamepad else 0
+        gamepad_right_y = gamepad.get_axis(4) if gamepad else 0
 
-        if keys[pygame.K_RIGHT] and keys[pygame.K_LEFT] or keys[pygame.K_UP] and keys[pygame.K_DOWN]:
+        gear_out = self._flags & (Taxi._FLAG_GEAR_OUT | Taxi._FLAG_GEAR_SHOCKS) != 0
+
+        self._fuel_consumption = 0.0
+
+        if (keys[pygame.K_RIGHT] and keys[pygame.K_LEFT]) or (keys[pygame.K_UP] and keys[pygame.K_DOWN])or \
+                (gamepad_left_x < 0 < gamepad_left_x) or (gamepad_left_y < 0 < gamepad_left_y):
             return
 
-        if keys[pygame.K_LEFT] and not gear_out:
+        if (keys[pygame.K_LEFT] or gamepad_right_x < -0.5) and not gear_out:
             self._flags |= Taxi._FLAG_LEFT | Taxi._FLAG_REAR_REACTOR
-            self._acceleration_x = max(self._acceleration_x - Taxi._REAR_REACTOR_POWER, -Taxi._MAX_ACCELERATION_X)
+            self._acceleration.x = max(self._acceleration.x - Taxi._REAR_REACTOR_POWER, -Taxi._MAX_ACCELERATION_X)
+            self._fuel_consumption += abs(self._acceleration.x)
 
-        if keys[pygame.K_RIGHT] and not gear_out:
+        if (keys[pygame.K_RIGHT] or gamepad_right_x > 0.5) and not gear_out:
             self._flags &= ~Taxi._FLAG_LEFT
-            self._flags |= self._FLAG_REAR_REACTOR
-            self._acceleration_x = min(self._acceleration_x + Taxi._REAR_REACTOR_POWER, Taxi._MAX_ACCELERATION_X)
+            self._flags |= Taxi._FLAG_REAR_REACTOR
+            self._acceleration.x = min(self._acceleration.x + Taxi._REAR_REACTOR_POWER, Taxi._MAX_ACCELERATION_X)
+            self._fuel_consumption += abs(self._acceleration.x)
 
-        if not (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
-            self._flags &= ~Taxi._FLAG_REAR_REACTOR
-            self._acceleration_x = 0.0
-
-        if keys[pygame.K_DOWN] and not gear_out:
-            self._flags &= ~Taxi._FLAG_BOTTOM_REACTOR
-            self._flags |= Taxi._FLAG_TOP_REACTOR
-            self._acceleration_y = min(self._acceleration_y + Taxi._TOP_REACTOR_POWER, Taxi._MAX_ACCELERATION_Y_DOWN)
-
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_UP] or gamepad_right_y < -0.5:
             self._flags &= ~Taxi._FLAG_TOP_REACTOR
             self._flags |= Taxi._FLAG_BOTTOM_REACTOR
-            self._acceleration_y = max(self._acceleration_y - Taxi._BOTTOM_REACTOR_POWER, -Taxi._MAX_ACCELERATION_Y_UP)
+            self._acceleration.y = max(self._acceleration.y - Taxi._BOTTOM_REACTOR_POWER, -Taxi._MAX_ACCELERATION_Y_UP)
+            self._fuel_consumption += abs(self._acceleration.y)
             if self._pad_landed_on:
                 self._pad_landed_on = None
                 self.hide_gear()
 
-        if not (keys[pygame.K_UP] or keys[pygame.K_DOWN]):
+        if (keys[pygame.K_DOWN] or gamepad_right_y > 0.5) and not gear_out:
+            self._flags &= ~Taxi._FLAG_BOTTOM_REACTOR
+            self._flags |= Taxi._FLAG_TOP_REACTOR
+            self._acceleration.y = min(self._acceleration.y + Taxi._TOP_REACTOR_POWER, Taxi._MAX_ACCELERATION_Y_DOWN)
+            self._fuel_consumption += abs(self._acceleration.y)
+
+
+        if not (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or abs(gamepad_left_x) > 0.1 or abs(gamepad_right_x) > 0.1):
+            self._flags &= ~Taxi._FLAG_REAR_REACTOR
+            self._acceleration.x = 0.0
+
+        if not (keys[pygame.K_UP] or keys[pygame.K_DOWN] or abs(gamepad_right_y) > 0.1 or abs(gamepad_left_y) > 0.1):
             self._flags &= ~(Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_BOTTOM_REACTOR)
-            self._acceleration_y = 0.0
+            self._acceleration.y = 0.0
+
+        if any(keys) or any([gamepad_left_x, gamepad_left_y, gamepad_right_x, gamepad_right_y]):
+            self._fuel_status -= abs(self._fuel_consumption)
+        else:
+            self._fuel_consumption = 0.0
+
+        if self._fuel_status < 0:
+            self._flags = self._FLAG_DESTROYED
+            self._crash_sound.play()
+            self._velocity = pygame.Vector2(0.0, 0.0)
+            self._acceleration = pygame.Vector2(0.0, Taxi._CRASH_ACCELERATION)
+
+        self._hud.set_current_fuel(self._fuel_status)
+
+    def is_refueling(self):
+        if self._fuel_status < 100:
+            self._fuel_status += 0.05
+        else:
+            self._fuel_status = 100
+        self._hud.set_current_fuel(self._fuel_status)
 
     def hide_gear(self) -> None:
         """ Pour faire  rentrer le train d’atterrissage au décollage d’une plateforme. """
-        if not (self._flags & Taxi._FLAG_GEAR_OUT): #Condition pour verifier si le train d'atterrissage sont fermer
-            return #Si ils sont deja fermé, alors la fonction fais rien
-        else: #Sinon, le train d'atterrissage sont sorti
-            self._flags &= ~Taxi._FLAG_GEAR_OUT
-            self._select_image()
+        if self._flags & (Taxi._FLAG_GEAR_OUT | Taxi._FLAG_GEAR_SHOCKS):  # Si le taxi a sorti ses pattes
+            self._flags &= ~(Taxi._FLAG_GEAR_OUT | Taxi._FLAG_GEAR_SHOCKS)  # On enlève ses pattes
 
     def _reinitialize(self) -> None:
         """ Initialise (ou réinitialise) les attributs de l'instance. """
@@ -340,13 +438,22 @@ class Taxi(pygame.sprite.Sprite):
         self.rect.x = self._initial_pos[0] - self.rect.width / 2
         self.rect.y = self._initial_pos[1] - self.rect.height / 2
 
-        self._pos_x = float(self.rect.x)
-        self._velocity_x = 0.0
-        self._acceleration_x = 0.0
+        self._position = pygame.Vector2(self.rect.x, self.rect.y)
+        self._velocity = pygame.Vector2(0.0, 0.0)
+        self._acceleration = pygame.Vector2(0.0, 0.0)
 
-        self._pos_y = float(self.rect.y)
-        self._velocity_y = 0.0
-        self._acceleration_y = 0.0
+        self._current_slide_frame = 0
+        self._last_slide_frame_time = 0
+        self._accumulated_slide_frame_time = 0
+        self._max_slide_length = self.rect.width / 2
+        self._slide_length_per_images = 0
+        self._top_slide_length = 0
+        self._sliding = False
+
+        self._accumulated_rough_landing_frame_time = 0
+        self._last_rough_landing_frame_time = 0
+        self._rough_landing = False
+
 
         self._pad_landed_on = None
         self._taking_off = False
@@ -361,6 +468,7 @@ class Taxi(pygame.sprite.Sprite):
         if self._flags & Taxi._FLAG_DESTROYED:
             self.image = self._surfaces[ImgSelector.DESTROYED][facing]
             self.mask = self._masks[ImgSelector.DESTROYED][facing]
+            self._fuel_status = 100
             return
 
         condition_flags = Taxi._FLAG_TOP_REACTOR | Taxi._FLAG_REAR_REACTOR
@@ -401,9 +509,9 @@ class Taxi(pygame.sprite.Sprite):
             self.mask = self._masks[ImgSelector.GEAR_OUT][facing]
             return
 
-        if self._flags & Taxi._FLAG_DESTROYED:
-            self.image = self._surfaces[ImgSelector.DESTROYED][facing]
-            self.mask = self._masks[ImgSelector.DESTROYED][facing]
+        if self._flags & Taxi._FLAG_GEAR_SHOCKS:
+            self.image = self._surfaces[ImgSelector.GEAR_SHOCKS][facing]
+            self.mask = self._masks[ImgSelector.GEAR_SHOCKS][facing]
             return
 
         self.image = self._surfaces[ImgSelector.IDLE][facing]
@@ -527,7 +635,3 @@ class Taxi(pygame.sprite.Sprite):
         masks[ImgSelector.DESTROYED] = pygame.mask.from_surface(surface), pygame.mask.from_surface(flipped)
 
         return surfaces, masks
-
-    @property
-    def last_saved_money(self):
-        return self._last_saved_money

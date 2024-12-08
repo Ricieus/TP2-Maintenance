@@ -8,6 +8,8 @@ class Files(Enum):
     VOICES_ASTRONAUT_HEY_TAXI = auto()
     VOICES_ASTRONAUT_PAD = auto()
     VOICES_ASTRONAUT_HEY = auto()
+    IMG_FUEL_GAUGE_FULL = auto()
+    IMG_FUEL_GAUGE_EMPTY = auto()
     IMG_ICON_LIVES = auto()
     IMG_LOADING = auto()
     SND_MUSIC_LOADING = auto()
@@ -23,10 +25,15 @@ class Files(Enum):
     SND_REACTOR = auto()
     SND_CRASH = auto()
     CFG_LEVEL = auto()
+    SND_JINGLE = auto()
+    ROUGH_LANDING = auto()
+    SMOOTH_LANDING = auto()
+    IMG_SPACE_TAXI_ICON = auto()
+    GAME_OVER_IMG = auto()
 
 
 class GameSettings:
-    """ Singleton pour les paramètres de jeu. """
+    """ Singleton pour les paramÃ¨tres de jeu. """
 
     SCREEN_WIDTH = 1280
     SCREEN_HEIGHT = 720
@@ -53,7 +60,7 @@ class GameSettings:
         ],
         Files.VOICES_ASTRONAUT_HEY: "voices/gary_hey_01.mp3",
         Files.IMG_ICON_LIVES: "img/hud_lives.png",
-        Files.IMG_LOADING: "img/loading.png",
+        Files.IMG_LOADING: "img/new_loading.jpg",
         Files.SND_MUSIC_LOADING: "snd/390539__burghrecords__dystopian-future-fx-sounds-8.wav",
         Files.IMG_LEVEL: "img/space01.png",
         Files.SND_MUSIC_LEVEL: "snd/476556__magmisoundtracks__sci-fi-music-loop-01.wav",
@@ -66,6 +73,8 @@ class GameSettings:
             "img/obstacle01.png",
             "img/obstacle02.png",
         ],
+        Files.IMG_FUEL_GAUGE_FULL: "img/fuel_gauge_full.png",
+        Files.IMG_FUEL_GAUGE_EMPTY: "img/fuel_gauge_empty.png",
         Files.IMG_PUMP: "img/pump.png",
         Files.IMG_PADS: [
             "img/pad01.png",
@@ -78,7 +87,12 @@ class GameSettings:
         Files.SND_SPLASH: "snd/371516__mrthenoronha__space-game-theme-loop.wav",
         Files.IMG_TAXIS: "img/taxis.png",
         Files.SND_REACTOR: "snd/170278__knova__jetpack-low.wav",
-        Files.SND_CRASH: "snd/237375__squareal__car-crash.wav"
+        Files.SND_CRASH: "snd/237375__squareal__car-crash.wav",
+        Files.SND_JINGLE: "snd/jingle.mp3",
+        Files.ROUGH_LANDING: "snd/land2-43790.mp3",
+        Files.SMOOTH_LANDING: "snd/rocket-landing-38715.mp3",
+        Files.IMG_SPACE_TAXI_ICON: 'img/space_taxi_icon.ico',
+        Files.GAME_OVER_IMG: "img/game_over.jpg"
     }
 
     _instance = None
