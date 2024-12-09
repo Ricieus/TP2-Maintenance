@@ -66,7 +66,7 @@ class Astronaut(pygame.sprite.Sprite):
             end_x, end_y = self._target_pad.astronaut_end.x, self._target_pad.astronaut_end.y
         else:
             end_x, end_y = self._target_pad.rect.x, self._target_pad.rect.y
-        distance = ((end_x - start_x) + (end_y - start_y))
+        distance = sqrt((end_x - start_x) ** 2 + (end_y - start_y) ** 2)
         self._trip_money = distance * Astronaut._TARIFF_PER_UNIT_DISTANCE
 
         self._time_is_money = 0.0

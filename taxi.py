@@ -262,8 +262,12 @@ class Taxi(pygame.sprite.Sprite):
             self._pad_landed_on = pad
 
             if self._astronaut:
-                if self._astronaut.target_pad and self._astronaut.target_pad.number == pad.number:
-                    self.unboard_astronaut()
+                target_pad = self._astronaut.target_pad
+
+                if target_pad:
+                    if hasattr(target_pad, 'number'):
+                        if target_pad.number == pad.number:
+                            self.unboard_astronaut()
 
             return True
 
