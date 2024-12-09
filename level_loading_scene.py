@@ -69,6 +69,7 @@ class LevelLoadingScene(Scene):
             is_joy_event = (event.type == pygame.JOYBUTTONDOWN and pygame.joystick.Joystick(0).get_button(9))
 
             if is_key_event or is_joy_event:
+                pygame.mixer.music.stop()
                 self._fade_out_start_time = pygame.time.get_ticks()
                 SceneManager().change_scene(f"level{self._level}", LevelLoadingScene._FADE_OUT_DURATION)
 
