@@ -239,50 +239,6 @@ class Astronaut(pygame.sprite.Sprite):
         # ÉTAPE 3 - changer d'état si le moment est venu
         self._state_time += current_time - self._last_frame_time
 
-        # if self._state == AstronautState.INTEGRATING:
-        #     if self._is_state_finished():
-        #         if self._is_unboarded:
-        #             self._pos_x = float(self.rect.x)
-        #             self.jump(self.target_pad.astronaut_end.x)
-        #         else:
-        #             self._change_state(AstronautState.WAITING)
-        # elif self._state == AstronautState.DISINTEGRATING:
-        #     if self._is_state_finished():
-        #         if self._target_pad is not Pad.UP and self._target_x == self._target_pad.astronaut_end.x:
-        #             self._state = AstronautState.REACHED_DESTINATION
-        #         else:
-        #             self._state = AstronautState.ONBOARD
-        #             if self._target_pad is Pad.UP:
-        #                 self._pad_please_clips[0].play()
-        #                 self._hud.set_current_pad("UP")
-        #             else:
-        #                 self._pad_please_clips[self._target_pad.number].play()
-        #                 self._hud.set_current_pad(str(self._target_pad.number))
-        # elif self._state == AstronautState.WAITING:
-        #     if self._state_time >= self._waving_delay:
-        #         self._call_taxi()
-        #         self._change_state(AstronautState.WAVING)
-        # elif self._state == AstronautState.WAVING:
-        #     if self._is_state_finished():
-        #         self._change_state(AstronautState.WAITING)
-        #         self._waving_delay = random.uniform(*Astronaut._WAVING_DELAYS)
-        # elif self._state in (AstronautState.JUMPING_RIGHT, AstronautState.JUMPING_LEFT):
-        #     if self.rect.x == self._target_x:
-        #         self._change_state(AstronautState.DISINTEGRATING)
-        #     self._pos_x += self._velocity
-        #     self.rect.x = round(self._pos_x)
-
-        # if self._state == AstronautState.INTEGRATING:
-        #     self._integrating_state()
-        # elif self._state == AstronautState.DISINTEGRATING:
-        #     self._disintegrating_state()
-        # elif self._state == AstronautState.WAITING:
-        #     self._waving_state()
-        # elif self._state == AstronautState.WAVING:
-        #     self._waving_state()
-        # elif self._state in (AstronautState.JUMPING_RIGHT, AstronautState.JUMPING_LEFT):
-        #     self._jumping_state()
-
         handler = self._update_state.get(self._state)
         if handler:
             handler()

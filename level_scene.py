@@ -159,10 +159,11 @@ class LevelScene(Scene):
             self._is_first_update_valid = True
             return
 
-        if self._is_jingle_sound_on: #Condition pour voir si le jingle sonore est en train jouer
-            jingle_play_duration = (pygame.time.get_ticks() - self._jingle_begin_time) / 1000 #Pour calculer le temps passé du sonore jingle en secondes
-            if jingle_play_duration > self._jingle_sound_effect.get_length(): #Condition pour comparer le temps avec la longueur du jingle
+        if self._is_jingle_sound_on:
+            jingle_play_duration = (pygame.time.get_ticks() - self._jingle_begin_time) / 1000
+            if jingle_play_duration > self._jingle_sound_effect.get_length():
                 self._is_jingle_sound_on = False
+                self._last_taxied_astronaut_time = time.time()
             return
 
         # Initialisation de la musique si ce n'est pas déjà fait
