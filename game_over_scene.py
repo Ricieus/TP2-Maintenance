@@ -1,5 +1,7 @@
 import pygame
 
+from fatal_error import FatalError
+from game_settings import Files, GameSettings
 from scene import Scene
 
 
@@ -7,7 +9,13 @@ class GameOver(Scene):
 
     def __init__(self) -> None:
         super().__init__()
-        self._surface = pygame.image.load("img/game_over.jpg").convert_alpha()
+        try:
+         self._surface = pygame.image.load(GameSettings.FILE_NAMES[Files.GAME_OVER_IMG]).convert_alpha()
+        except FileNotFoundError as e:
+            directory_plus_filename = str(e).split("'")[1]
+            filename = directory_plus_filename.split("/")[-1]
+            fatal_error_app = FatalError()
+            fatal_error_app.run(filename)
 
     def handle_event(self, event: pygame.event.Event) -> None:
         pass

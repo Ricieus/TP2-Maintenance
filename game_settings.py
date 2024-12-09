@@ -29,6 +29,7 @@ class Files(Enum):
     ROUGH_LANDING = auto()
     SMOOTH_LANDING = auto()
     IMG_SPACE_TAXI_ICON = auto()
+    GAME_OVER_IMG = auto()
 
 
 class GameSettings:
@@ -59,7 +60,7 @@ class GameSettings:
         ],
         Files.VOICES_ASTRONAUT_HEY: "voices/gary_hey_01.mp3",
         Files.IMG_ICON_LIVES: "img/hud_lives.png",
-        Files.IMG_LOADING: "img/loading.png",
+        Files.IMG_LOADING: "img/new_loading.jpg",
         Files.SND_MUSIC_LOADING: "snd/390539__burghrecords__dystopian-future-fx-sounds-8.wav",
         Files.IMG_LEVEL: "img/space01.png",
         Files.SND_MUSIC_LEVEL: "snd/476556__magmisoundtracks__sci-fi-music-loop-01.wav",
@@ -90,7 +91,8 @@ class GameSettings:
         Files.SND_JINGLE: "snd/jingle.mp3",
         Files.ROUGH_LANDING: "snd/land2-43790.mp3",
         Files.SMOOTH_LANDING: "snd/rocket-landing-38715.mp3",
-        Files.IMG_SPACE_TAXI_ICON: 'img/space_taxi_icon.ico'
+        Files.IMG_SPACE_TAXI_ICON: 'img/space_taxi_icon.ico',
+        Files.GAME_OVER_IMG: "img/game_over.jpg"
     }
 
     _instance = None
