@@ -404,7 +404,7 @@ class Taxi(pygame.sprite.Sprite):
             self._flags |= Taxi._FLAG_BOTTOM_REACTOR
             self._acceleration.y = max(self._acceleration.y - Taxi._BOTTOM_REACTOR_POWER, -Taxi._MAX_ACCELERATION_Y_UP)
             self._fuel_consumption += abs(self._acceleration.y)
-            if self._pad_landed_on:
+            if self._pad_landed_on and not self._rough_landing:
                 self._pad_landed_on = None
                 self.hide_gear()
 
