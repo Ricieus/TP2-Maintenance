@@ -210,7 +210,7 @@ class LevelScene(Scene):
             elif self._taxi.pad_landed_on:
                 if self._taxi.pad_landed_on.number == self._astronaut.source_pad.number:
                     if self._astronaut.is_waiting_for_taxi():
-                        self._astronaut.jump(self._taxi.rect.x + 20)
+                        self._astronaut.jump(self._taxi.door_position)
             elif self._astronaut.is_jumping_on_starting_pad():
                 self._astronaut.wait()
         else:

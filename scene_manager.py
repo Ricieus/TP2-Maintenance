@@ -54,7 +54,6 @@ class SceneManager:
                 break
         if scene_name:
             del self._scenes[scene_name]
-            print(f"Scène {scene_name} supprimée de la mémoire.")
 
     def update(self) -> None:
         if self._current_scene:

@@ -48,13 +48,11 @@ def main() -> None:
         fps_font = pygame.font.Font(None, 36)
 
     scene_manager = SceneManager()
-    print("Début de construction")
     scene_manager.add_scene("black", BlackScene())
     scene_manager.add_scene("splash", SplashScene())
     scene_manager.add_scene("level1_load", LevelLoadingScene(1))
     scene_manager.add_scene("level2_load", LevelLoadingScene(2))
     scene_manager.add_scene("game_over", GameOver())
-    print("Fin de construction")
 
     scene_manager.set_scene("black")
     scene_manager.change_scene("splash", SplashScene.FADE_IN_DURATION)
