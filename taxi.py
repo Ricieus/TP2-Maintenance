@@ -475,7 +475,6 @@ class Taxi(pygame.sprite.Sprite):
 
 
         self._pad_landed_on = None
-        self._taking_off = False
 
         self._astronaut = None
         self._hud.set_trip_money(0.0)
