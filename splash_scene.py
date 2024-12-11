@@ -19,7 +19,6 @@ class SplashScene(Scene):
         self._music.play(loops=-1, fade_ms=1000)
         self._fade_out_start_time = None
 
-        # Load the font with a smaller size
         self._font = pygame.freetype.Font(GameSettings.FILE_NAMES[Files.FONT], 16)
         self._text_alpha = 0
         self._fade_in = True
@@ -27,11 +26,9 @@ class SplashScene(Scene):
         pygame.joystick.init()
         if pygame.joystick.get_count() > 0:
             self.joystick = pygame.joystick.Joystick(0)
-            self.joystick.init()  # Initialiser le premier joystick
-            print(f"Joystick détecté: {self.joystick.get_name()}")
+            self.joystick.init()
         else:
             self.joystick = None
-            print("Aucun joystick détecté")
 
     def handle_event(self, event: pygame.event.Event) -> None:
         """ Gère les événements du clavier et du joystick. """
