@@ -101,8 +101,8 @@ class LevelScene(Scene):
 
             self._pads = []
             for key in self.config["pads"]:
-                img_path, x, y, width, height = self.config.get("pads", key).split(", ")
-                self._pads.append(Pad(int(key[3:]), img_path, (int(x), int(y)), int(width), int(height)))
+                pad_num, x, y, width, height = self.config.get("pads", key).split(", ")
+                self._pads.append(Pad(int(key[3:]), GameSettings.FILE_NAMES[Files.IMG_PADS[int(pad_num) - 1]], (int(x), int(y)), int(width), int(height)))
             self._pad_sprites = pygame.sprite.Group()
             self._pad_sprites.add(self._pads)
             Pad.UP = self._gate
