@@ -37,12 +37,14 @@ class SplashScene(Scene):
         """ Gère les événements du clavier et du joystick. """
         if event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                self._music.stop()
                 self._fade_out_start_time = pygame.time.get_ticks()
                 SceneManager().change_scene("level1_load", SplashScene._FADE_OUT_DURATION)
 
         if event.type == pygame.JOYBUTTONDOWN:
             joystick = pygame.joystick.Joystick(0)
             if joystick.get_button(9):
+                self._music.stop()
                 self._fade_out_start_time = pygame.time.get_ticks()
                 SceneManager().change_scene("level1_load", SplashScene._FADE_OUT_DURATION)
 
