@@ -66,7 +66,7 @@ class Astronaut(pygame.sprite.Sprite):
             end_x, end_y = self._target_pad.astronaut_end.x, self._target_pad.astronaut_end.y
         else:
             end_x, end_y = self._target_pad.rect.x, self._target_pad.rect.y
-        distance = ((end_x - start_x) + (end_y - start_y))
+        distance = sqrt((end_x - start_x) ** 2 + (end_y - start_y) ** 2)
         self._trip_money = distance * Astronaut._TARIFF_PER_UNIT_DISTANCE
 
         self._time_is_money = 0.0
@@ -96,6 +96,21 @@ class Astronaut(pygame.sprite.Sprite):
             self._current_frame = 0
             self._last_frame_time = time.time()
 
+            self._update_state = {
+                AstronautState.INTEGRATING: self._integrating_state,
+                AstronautState.DISINTEGRATING: self._disintegrating_state,
+                AstronautState.WAITING: self._waiting_state,
+                AstronautState.WAVING: self._waving_state,
+                AstronautState.JUMPING_LEFT: self._jumping_state,
+                AstronautState.JUMPING_RIGHT: self._jumping_state
+            }
+
+            self._state = AstronautState.INTEGRATING
+            self._frames = self._all_frames[self._state]
+            self._state_time = 0  # temps écoulé dans l'état actuel
+            self._current_frame = 0
+            self._last_frame_time = time.time()
+            
             self.image, self.mask = self._frames[0]
             self.rect = self.image.get_rect()
             self.rect.x = self._source_pad.astronaut_start.x
@@ -115,8 +130,6 @@ class Astronaut(pygame.sprite.Sprite):
             filename = directory_plus_filename.split("/")[-1]
             fatal_error_app = FatalError()
             fatal_error_app.run(filename)
-
-
 
     @property
     def source_pad(self) -> Pad:
@@ -224,38 +237,9 @@ class Astronaut(pygame.sprite.Sprite):
         # ÉTAPE 3 - changer d'état si le moment est venu
         self._state_time += current_time - self._last_frame_time
 
-        if self._state == AstronautState.INTEGRATING:
-            if self._is_state_finished():
-                if self._is_unboarded:
-                    self._pos_x = float(self.rect.x)
-                    self.jump(self.target_pad.astronaut_end.x)
-                else:
-                    self._change_state(AstronautState.WAITING)
-        elif self._state == AstronautState.DISINTEGRATING:
-            if self._is_state_finished():
-                if self._target_pad is not Pad.UP and self._target_x == self._target_pad.astronaut_end.x:
-                    self._state = AstronautState.REACHED_DESTINATION
-                else:
-                    self._state = AstronautState.ONBOARD
-                    if self._target_pad is Pad.UP:
-                        self._pad_please_clips[0].play()
-                        self._hud.set_current_pad("UP")
-                    else:
-                        self._pad_please_clips[self._target_pad.number].play()
-                        self._hud.set_current_pad(str(self._target_pad.number))
-        elif self._state == AstronautState.WAITING:
-            if self._state_time >= self._waving_delay:
-                self._call_taxi()
-                self._change_state(AstronautState.WAVING)
-        elif self._state == AstronautState.WAVING:
-            if self._is_state_finished():
-                self._change_state(AstronautState.WAITING)
-                self._waving_delay = random.uniform(*Astronaut._WAVING_DELAYS)
-        elif self._state in (AstronautState.JUMPING_RIGHT, AstronautState.JUMPING_LEFT):
-            if self.rect.x == self._target_x:
-                self._change_state(AstronautState.DISINTEGRATING)
-            self._pos_x += self._velocity
-            self.rect.x = round(self._pos_x)
+        handler = self._update_state.get(self._state)
+        if handler:
+            handler()
 
         self.image, self.mask = self._frames[self._current_frame]
 
@@ -298,7 +282,42 @@ class Astronaut(pygame.sprite.Sprite):
         if self._hey_clips:
             self._hey_clips[0].play()
 
+    def _integrating_state(self):
+        if self._is_state_finished():
+            if self._is_unboarded:
+                self._pos_x = float(self.rect.x)
+                self.jump(self.target_pad.astronaut_end.x)
+            else:
+                self._change_state(AstronautState.WAITING)
 
+    def _disintegrating_state(self):
+        if self._is_state_finished():
+            if self._target_pad is not Pad.UP and self._target_x == self._target_pad.astronaut_end.x:
+                self._state = AstronautState.REACHED_DESTINATION
+            else:
+                self._state = AstronautState.ONBOARD
+                if self._target_pad is Pad.UP:
+                    self._pad_please_clips[0].play()
+                    self._hud.set_current_pad("UP")
+                else:
+                    self._pad_please_clips[self._target_pad.number].play()
+                    self._hud.set_current_pad(str(self._target_pad.number))
+
+    def _waiting_state(self):
+        if self._state_time >= self._waving_delay:
+            self._call_taxi()
+            self._change_state(AstronautState.WAVING)
+
+    def _waving_state(self):
+        if self._is_state_finished():
+            self._change_state(AstronautState.WAITING)
+            self._waving_delay = random.uniform(*Astronaut._WAVING_DELAYS)
+
+    def _jumping_state(self):
+        if self.rect.x == self._target_x:
+            self._change_state(AstronautState.DISINTEGRATING)
+        self._pos_x += self._velocity
+        self.rect.x = round(self._pos_x)
 
     @staticmethod
     def _load_and_build_frames() -> tuple:
@@ -355,7 +374,7 @@ class Astronaut(pygame.sprite.Sprite):
             waving_frames.append((surface, mask))
         waving_frames.extend(waving_frames[-2::-1][:2])
         waving_frames.extend(waving_frames[2:] + waving_frames[-2::-1])
-        waving_frames.extend(waving_frames[0:1])
+        waving_frames.extend(waving_frames[:1])
 
         # astronaute qui se déplace en sautant
         jumping_left_frames = []

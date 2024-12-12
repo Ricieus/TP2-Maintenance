@@ -32,7 +32,6 @@ class Pad(pygame.sprite.Sprite):
         else:
             self.image = pygame.image.load(filename).convert_alpha()
             self.mask = pygame.mask.from_surface(self.image)
-
             self._PAD_SURFACES[filename] = (self.image, self.mask)
 
         font = GameSettings().pad_font
@@ -54,12 +53,8 @@ class Pad(pygame.sprite.Sprite):
             elif a == 0 and visible_pixels_pad == 0:
                 transparent_pixels_pad += 1
         self.image.unlock()
-
         self._label_text_offset = ((visible_pixels_pad - text_width) / 2 + transparent_pixels_pad + 1, 3)
         self._label_background_offset = ((visible_pixels_pad - background_width) / 2 + transparent_pixels_pad, 2)
-
-        self.image.blit(self._label_background, self._label_background_offset)
-        self.image.blit(self._label_text, self._label_text_offset)
 
         self.rect = self.image.get_rect()
         self.rect.x = pos[0]
@@ -69,7 +64,12 @@ class Pad(pygame.sprite.Sprite):
         self.astronaut_end = pygame.Vector2(self.rect.x + astronaut_end_x, self.rect.y - 24)
 
     def draw(self, surface: pygame.Surface) -> None:
-        surface.blit(self.image, self.rect)
+        image_copy = self.image.copy()
+
+        image_copy.blit(self._label_background, self._label_background_offset)
+        image_copy.blit(self._label_text, self._label_text_offset)
+
+        surface.blit(image_copy, self.rect)
 
     def update(self, *args, **kwargs) -> None:
         pass
