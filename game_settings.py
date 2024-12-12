@@ -67,7 +67,7 @@ class GameSettings:
         Files.IMG_GATE: "img/gate.png",
         Files.IMG_OBSTACLES: [
             "img/south01.png",
-            "img/west1.png",
+            "img/west01.png",
             "img/east01.png",
             "img/north01.png",
             "img/obstacle01.png",
