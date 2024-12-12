@@ -237,7 +237,7 @@ class Astronaut(pygame.sprite.Sprite):
         # ÉTAPE 3 - changer d'état si le moment est venu
         self._state_time += current_time - self._last_frame_time
 
-        handler = self._update_state.get(self._state)
+        handler = self._update_state.get(self._state) #  Inspiré de ChatGPT
         if handler:
             handler()
 
