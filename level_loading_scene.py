@@ -20,7 +20,7 @@ class LevelLoadingScene(Scene):
     def __init__(self, level: int) -> None:
         super().__init__()
         self._settings = GameSettings()
-        self._text_font = pygame.font.Font("fonts/boombox2.ttf", 24)
+        self._text_font = pygame.font.Font(GameSettings.FILE_NAMES[Files.FONT], 24)
 
         self._level = level
         self._music_started = False
@@ -73,7 +73,7 @@ class LevelLoadingScene(Scene):
                 SceneManager().change_scene(f"level{self._level}", LevelLoadingScene._FADE_OUT_DURATION)
 
     def update(self) -> None:
-        if not self._scene_in_use:  # Pour exécuter une seule fois.
+        if not self._scene_in_use:
             SceneManager().add_scene(f"level{self._level}", LevelScene(self._level))
             self._scene_in_use = True
 
