@@ -131,8 +131,6 @@ class Astronaut(pygame.sprite.Sprite):
             fatal_error_app = FatalError()
             fatal_error_app.run(filename)
 
-
-
     @property
     def source_pad(self) -> Pad:
         return self._source_pad
@@ -321,7 +319,6 @@ class Astronaut(pygame.sprite.Sprite):
         self._pos_x += self._velocity
         self.rect.x = round(self._pos_x)
 
-
     @staticmethod
     def _load_and_build_frames() -> tuple:
         """
@@ -377,7 +374,7 @@ class Astronaut(pygame.sprite.Sprite):
             waving_frames.append((surface, mask))
         waving_frames.extend(waving_frames[-2::-1][:2])
         waving_frames.extend(waving_frames[2:] + waving_frames[-2::-1])
-        waving_frames.extend(waving_frames[0:1])
+        waving_frames.extend(waving_frames[:1])
 
         # astronaute qui se déplace en sautant
         jumping_left_frames = []

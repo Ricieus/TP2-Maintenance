@@ -60,10 +60,8 @@ class LevelScene(Scene):
             self.config = configparser.ConfigParser()
             self.config.read(GameSettings.FILE_NAMES[Files.CFG_LEVEL].replace("#", str(self._level)))
 
-            self._surface = pygame.image.load(self.config.get("level", "surface")).convert_alpha()
-            self._music = pygame.mixer.Sound(self.config.get("level", "music"))
-
-            self._gate = Gate(GameSettings.FILE_NAMES[Files.IMG_GATE], (582, 3))
+            self._surface = pygame.image.load(GameSettings.FILE_NAMES[Files.IMG_LEVEL]).convert_alpha()
+            self._music = pygame.mixer.Sound(GameSettings.FILE_NAMES[Files.SND_MUSIC_LEVEL])
 
             self._settings = GameSettings()
             self._hud = HUD()
@@ -71,40 +69,31 @@ class LevelScene(Scene):
             self._taxi = Taxi((self._settings.SCREEN_WIDTH / 2, self._settings.SCREEN_HEIGHT / 2))
 
             gate_path = self.config.get("gate", "gate")
-
             gate_data = gate_path.split(",")
-
-            self._gate = pygame.image.load(gate_data[0].strip()).convert_alpha()
-
-
-            # Extraction des coordonnées (x, y)
-            x, y = map(int, gate_data[1:])
-            self._gate_position = (x, y)
-
-            self._gate = Gate(gate_data[0].strip(), (x, y))
-
-
+            x, y = map(int, gate_data[:])
+            self._gate = Gate(GameSettings.FILE_NAMES[Files.IMG_GATE], (x, y))
 
             self._obstacles = []
             for key in self.config["obstacles"]:
-                img_path, x, y = self.config.get("obstacles", key).split(", ")
-                self._obstacles.append(Obstacle(img_path, (int(x), int(y))))
+                obstacle_num, x, y = self.config.get("obstacles", key).split(", ")
+                self._obstacles.append(Obstacle(GameSettings.FILE_NAMES[Files.IMG_OBSTACLES][int(obstacle_num) - 1], (int(x), int(y))))
             self._obstacle_sprites = pygame.sprite.Group()
             self._obstacle_sprites.add(self._obstacles)
 
             self._pumps = []
             for key in self.config["pumps"]:
-                img_path, x, y = self.config.get("pumps", key).split(", ")
-                self._pumps.append(Pump(img_path, (int(x), int(y))))
+                x, y = self.config.get("pumps", key).split(", ")
+                self._pumps.append(Pump(GameSettings.FILE_NAMES[Files.IMG_PUMP], (int(x), int(y))))
             self._pump_sprites = pygame.sprite.Group()
             self._pump_sprites.add(self._pumps)
 
             self._pads = []
             for key in self.config["pads"]:
-                img_path, x, y, width, height = self.config.get("pads", key).split(", ")
-                self._pads.append(Pad(int(key[3:]), img_path, (int(x), int(y)), int(width), int(height)))
+                pad_num, x, y, width, height = self.config.get("pads", key).split(", ")
+                self._pads.append(Pad(int(key[3:]), GameSettings.FILE_NAMES[Files.IMG_PADS][int(pad_num) - 1], (int(x), int(y)), int(width), int(height)))
             self._pad_sprites = pygame.sprite.Group()
             self._pad_sprites.add(self._pads)
+
             Pad.UP = self._gate
             self._reinitialize()
             self._hud.visible = True
@@ -210,7 +199,7 @@ class LevelScene(Scene):
             elif self._taxi.pad_landed_on:
                 if self._taxi.pad_landed_on.number == self._astronaut.source_pad.number:
                     if self._astronaut.is_waiting_for_taxi():
-                        self._astronaut.jump(self._taxi.rect.x + 20)
+                        self._astronaut.jump(self._taxi.door_position)
             elif self._astronaut.is_jumping_on_starting_pad():
                 self._astronaut.wait()
         else:
@@ -224,7 +213,7 @@ class LevelScene(Scene):
 
         for pad in self._pads:
             if self._taxi.land_on_pad(pad):
-                pass  # Effets secondaires d'un atterrissage ici (sliding)
+                pass  # Effets secondaires d'un atterrissage ici
             elif self._taxi.crash_on_obstacle(pad):
                 self.reset_money_after_crash()
                 self._hud.loose_live()
@@ -256,7 +245,8 @@ class LevelScene(Scene):
         self._obstacle_sprites.draw(screen)
         self._gate.draw(screen)
         self._pump_sprites.draw(screen)
-        self._pad_sprites.draw(screen)
+        for pad_sprites in self._pad_sprites:
+            pad_sprites.draw(screen)
         if self._taxi:
             self._taxi.draw(screen)
         if self._astronaut:
@@ -292,4 +282,3 @@ class LevelScene(Scene):
     def game_over_validation(self):
         if self._hud.get_lives() <= 0: #Condition pour voir si le joueur n'a pas de vie
             SceneManager().change_scene("game_over", LevelScene._FADE_OUT_DURATION) #Si le joueur n'a pas de vie, alors ca change le scène à game_over
-

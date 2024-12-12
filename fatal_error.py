@@ -48,7 +48,6 @@ class FatalError:
                         pygame.quit()
                         sys.exit()
                     if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                        print("Programme fermé par l'utilisateur.")
                         pygame.quit()
                         sys.exit()
 

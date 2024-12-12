@@ -24,8 +24,8 @@ class HUD:
         if not hasattr(self, '_initialized'):
             self._settings = GameSettings()
 
-            self._text_font = pygame.font.Font("fonts/boombox2.ttf", 24)
-            self._fuel_font = pygame.font.Font("fonts/boombox2.ttf", 12)
+            self._text_font = pygame.font.Font(GameSettings.FILE_NAMES[Files.FONT], 24)
+            self._fuel_font = pygame.font.Font(GameSettings.FILE_NAMES[Files.FONT], 12)
 
             self._bank_money = 0
             self._bank_money_surface = self._render_bank_money_surface()
